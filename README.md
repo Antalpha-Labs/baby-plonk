@@ -2,7 +2,7 @@
 
 **Baby Plonk** is an educational version of the PlonK protocol designed to assist beginners in comprehending its fundamental principles. While not a complete implementation of the protocol, it serves to simplify the concepts for ease of understanding, and does not prioritize efficiency.
 
-This repository originated from the [PlonKathon](https://github.com/0xPARC/plonkathon) and was subsequently modified to align with the material presented in [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md).
+This repository originated from the [PlonKathon](https://github.com/0xPARC/plonkathon) and was subsequently modified to align with the material presented in the first 4 articles of [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md).
 
 ## Getting started
 
