@@ -215,8 +215,12 @@ class Message4:
     s1_eval: Scalar
     # Evaluation of the second permutation polynomial S_σ2(X) at evaluation challenge ζ
     s2_eval: Scalar
+    # Evaluation of the second permutation polynomial S_σ3(X) at evaluation challenge ζ
+    s3_eval: Scalar
+    z_eval: Scalar
     # Evaluation of the shifted permutation polynomial z(X) at the shifted evaluation challenge ζω
     z_shifted_eval: Scalar
+    quot_eval: Scalar
 ```
 
 #### Round 5
