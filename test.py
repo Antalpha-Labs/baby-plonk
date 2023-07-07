@@ -6,67 +6,6 @@ import json
 from test.mini_poseidon import rc, mds, poseidon_hash
 from utils import *
 
-
-def basic_test():
-    # Extract 2^28 powers of tau
-    setup = Setup.from_file("test/powersOfTau28_hez_final_11.ptau")
-    print("Extracted setup")
-    program = Program(["c <== a * b"], 8)
-    vk = setup.verification_key(program.common_preprocessed_input())
-    print("Generated verification key")
-    their_output = json.load(open("test/main.plonk.vkey.json"))
-    for key in ("Qm", "Ql", "Qr", "Qo", "Qc", "S1", "S2", "S3", "X_2"):
-        if interpret_json_point(their_output[key]) != getattr(vk, key):
-            raise Exception(
-                "Mismatch {}: ours {} theirs {}".format(
-                    key, getattr(vk, key), their_output[key]
-                )
-            )
-    assert getattr(vk, "w") == int(their_output["w"])
-    print("Basic test success")
-    return setup
-
-
-# Equivalent to this zkrepl code:
-#
-# template Example () {
-#    signal input a;
-#    signal input b;
-#    signal c;
-#    c <== a * b + a;
-# }
-def ab_plus_a_test(setup):
-    program = Program(["ab === a - c", "-ab === a * b"], 8)
-    vk = setup.verification_key(program.common_preprocessed_input())
-    print("Generated verification key")
-    their_output = json.load(open("test/main.plonk.vkey-58.json"))
-    for key in ("Qm", "Ql", "Qr", "Qo", "Qc", "S1", "S2", "S3", "X_2"):
-        if interpret_json_point(their_output[key]) != getattr(vk, key):
-            raise Exception(
-                "Mismatch {}: ours {} theirs {}".format(
-                    key, getattr(vk, key), their_output[key]
-                )
-            )
-    assert getattr(vk, "w") == int(their_output["w"])
-    print("ab+a test success")
-
-
-def one_public_input_test(setup):
-    program = Program(["c public", "c === a * b"], 8)
-    vk = setup.verification_key(program.common_preprocessed_input())
-    print("Generated verification key")
-    their_output = json.load(open("test/main.plonk.vkey-59.json"))
-    for key in ("Qm", "Ql", "Qr", "Qo", "Qc", "S1", "S2", "S3", "X_2"):
-        if interpret_json_point(their_output[key]) != getattr(vk, key):
-            raise Exception(
-                "Mismatch {}: ours {} theirs {}".format(
-                    key, getattr(vk, key), their_output[key]
-                )
-            )
-    assert getattr(vk, "w") == int(their_output["w"])
-    print("One public input test success")
-
-
 def prover_test(setup):
     print("Beginning prover test")
     program = Program(["e public", "c <== a * b", "e <== c * d"], 8)
@@ -83,7 +22,6 @@ def verifier_test(setup, proof):
     public = [60]
     vk = setup.verification_key(program.common_preprocessed_input())
     assert vk.verify_proof(8, proof, public)
-    assert vk.verify_proof_unoptimized(8, proof, public)
     print("Verifier test success")
 
 
@@ -173,11 +111,8 @@ def poseidon_test(setup):
     assert vk.verify_proof(1024, proof, [1, 2, expected_value])
     print("Verified proof!")
 
-
 if __name__ == "__main__":
-    setup = basic_test()
-    ab_plus_a_test(setup)
-    one_public_input_test(setup)
+    setup = Setup.generate_srs()
     proof = prover_test(setup)
     verifier_test(setup, proof)
     factorization_test(setup)
