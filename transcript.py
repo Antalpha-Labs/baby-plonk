@@ -29,17 +29,21 @@ class Message3:
 
 @dataclass
 class Message4:
-    # all_eval: Scalar
     # Evaluation of a(X) at evaluation challenge ζ
     a_eval: Scalar
     # Evaluation of b(X) at evaluation challenge ζ
     b_eval: Scalar
     # Evaluation of c(X) at evaluation challenge ζ
     c_eval: Scalar
+    # Evaluation of QL(X) at evaluation challenge ζ
     ql_eval: Scalar
+    # Evaluation of QR(X) at evaluation challenge ζ
     qr_eval: Scalar
+    # Evaluation of QM(X) at evaluation challenge ζ
     qm_eval: Scalar
+    # Evaluation of QO(X) at evaluation challenge ζ
     qo_eval: Scalar
+    # Evaluation of QC(X) at evaluation challenge ζ
     qc_eval: Scalar
     # Evaluation of the first permutation polynomial S_σ1(X) at evaluation challenge ζ
     s1_eval: Scalar
@@ -47,14 +51,17 @@ class Message4:
     s2_eval: Scalar
     # Evaluation of the second permutation polynomial S_σ3(X) at evaluation challenge ζ
     s3_eval: Scalar
-    # Evaluation of the shifted permutation polynomial z(X) at the shifted evaluation challenge ζω
+    # Evaluation of the permutation polynomial z(X) at the evaluation challenge ζ
     z_eval: Scalar
+    # Evaluation of the shifted permutation polynomial z(X) at the shifted evaluation challenge ζω
     z_shifted_eval: Scalar
+    # Evaluation of Quotient Polynomial Quot(X) at evaluation challenge ζ
     quot_eval: Scalar
 
 
 @dataclass
 class Message5:
+    # (commitment to the opening proof polynomial)
     W_a: G1Point
     W_a_quot: G1Point
     W_b: G1Point
