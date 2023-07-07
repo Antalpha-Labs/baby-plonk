@@ -56,211 +56,139 @@ class VerificationKey:
         )
         PI_ev = PI.barycentric_eval(zeta)
 
-        # Compute the constant term of R. This is not literally the degree-0
-        # term of the R polynomial; rather, it's the portion of R that can
-        # be computed directly, without resorting to elliptic cutve commitments
-        r0 = (
-            PI_ev
-            - L0_ev * alpha**2
-            - (
-                alpha
-                * (proof["a_eval"] + beta * proof["s1_eval"] + gamma)
-                * (proof["b_eval"] + beta * proof["s2_eval"] + gamma)
-                * (proof["c_eval"] + gamma)
-                * proof["z_shifted_eval"]
+        # verify A with KZG10 commitment
+        W_a = proof["W_a"]
+        W_a_quot = proof["W_a_quot"]
+        a_eval = proof["a_eval"]
+        ec_comb_a = ec_lincomb(
+                [
+                    (W_a, 1),
+                    (W_a_quot, zeta),
+                    (b.G1, -a_eval),
+                ]
             )
-        )
+        assert b.pairing(self.X_2, W_a_quot) == b.pairing(b.G2, ec_comb_a)
+        print("Done KZG10 commitment check for A polynomial")
 
-        # D = (R - r0) + u * Z
-        D_pt = ec_lincomb(
-            [
-                (self.Qm, proof["a_eval"] * proof["b_eval"]),
-                (self.Ql, proof["a_eval"]),
-                (self.Qr, proof["b_eval"]),
-                (self.Qo, proof["c_eval"]),
-                (self.Qc, 1),
-                (
-                    proof["z_1"],
-                    (
-                        (proof["a_eval"] + beta * zeta + gamma)
-                        * (proof["b_eval"] + beta * 2 * zeta + gamma)
-                        * (proof["c_eval"] + beta * 3 * zeta + gamma)
-                        * alpha
-                        + L0_ev * alpha**2
-                        + u
-                    ),
-                ),
-                (
-                    self.S3,
-                    (
-                        -(proof["a_eval"] + beta * proof["s1_eval"] + gamma)
-                        * (proof["b_eval"] + beta * proof["s2_eval"] + gamma)
-                        * alpha
-                        * beta
-                        * proof["z_shifted_eval"]
-                    ),
-                ),
-                (proof["t_lo_1"], -ZH_ev),
-                (proof["t_mid_1"], -ZH_ev * zeta**group_order),
-                (proof["t_hi_1"], -ZH_ev * zeta ** (group_order * 2)),
-            ]
-        )
-
-        F_pt = ec_lincomb(
-            [
-                (D_pt, 1),
-                (proof["a_1"], v),
-                (proof["b_1"], v**2),
-                (proof["c_1"], v**3),
-                (self.S1, v**4),
-                (self.S2, v**5),
-            ]
-        )
-
-        E_pt = ec_mul(
-            b.G1,
-            (
-                -r0
-                + v * proof["a_eval"]
-                + v**2 * proof["b_eval"]
-                + v**3 * proof["c_eval"]
-                + v**4 * proof["s1_eval"]
-                + v**5 * proof["s2_eval"]
-                + u * proof["z_shifted_eval"]
-            ),
-        )
-
-        # What's going on here is a clever re-arrangement of terms to check
-        # the same equations that are being checked in the basic version,
-        # but in a way that minimizes the number of EC muls and even
-        # compressed the two pairings into one. The 2 pairings -> 1 pairing
-        # trick is basically to replace checking
-        #
-        # Y1 = A * (X - a) and Y2 = B * (X - b)
-        #
-        # with
-        #
-        # Y1 + A * a = A * X
-        # Y2 + B * b = B * X
-        #
-        # so at this point we can take a random linear combination of the two
-        # checks, and verify it with only one pairing.
-        assert b.pairing(
-            self.X_2, ec_lincomb([(proof["W_z_1"], 1), (proof["W_zw_1"], u)])
-        ) == b.pairing(
-            b.G2,
-            ec_lincomb(
+        # # verify A with KZG10 commitment
+        W_b = proof["W_b"]
+        W_b_quot = proof["W_b_quot"]
+        b_eval = proof["b_eval"]
+        ec_comb_b = ec_lincomb(
                 [
-                    (proof["W_z_1"], zeta),
-                    (proof["W_zw_1"], u * zeta * root_of_unity),
-                    (F_pt, 1),
-                    (E_pt, -1),
+                    (W_b, 1),
+                    (W_b_quot, zeta),
+                    (b.G1, -b_eval),
                 ]
-            ),
-        )
+            )
 
-        print("done combined check")
-        return True
+        assert b.pairing(self.X_2, W_b_quot) == b.pairing(b.G2, ec_comb_b)
+        print("Done KZG10 commitment check for B polynomial")
 
-    # Basic, easier-to-understand version of what's going on
-    def verify_proof_unoptimized(self, group_order: int, pf, public=[]) -> bool:
-        # 4. Compute challenges
-        beta, gamma, alpha, zeta, v, _ = self.compute_challenges(pf)
-        proof = pf.flatten()
-
-        # 5. Compute zero polynomial evaluation Z_H(ζ) = ζ^n - 1
-        root_of_unity = Scalar.root_of_unity(group_order)
-        ZH_ev = zeta**group_order - 1
-
-        # 6. Compute Lagrange polynomial evaluation L_0(ζ)
-        L0_ev = ZH_ev / (group_order * (zeta - 1))
-
-        # 7. Compute public input polynomial evaluation PI(ζ).
-        PI = Polynomial(
-            [Scalar(-x) for x in public]
-            + [Scalar(0) for _ in range(group_order - len(public))],
-            Basis.LAGRANGE,
-        )
-        PI_ev = PI.barycentric_eval(zeta)
-
-        # Recover the commitment to the linearization polynomial R,
-        # exactly the same as what was created by the prover
-        R_pt = ec_lincomb(
-            [
-                (self.Qm, proof["a_eval"] * proof["b_eval"]),
-                (self.Ql, proof["a_eval"]),
-                (self.Qr, proof["b_eval"]),
-                (self.Qo, proof["c_eval"]),
-                (b.G1, PI_ev),
-                (self.Qc, 1),
-                (
-                    proof["z_1"],
-                    (
-                        (proof["a_eval"] + beta * zeta + gamma)
-                        * (proof["b_eval"] + beta * 2 * zeta + gamma)
-                        * (proof["c_eval"] + beta * 3 * zeta + gamma)
-                        * alpha
-                    ),
-                ),
-                (
-                    self.S3,
-                    (
-                        -(proof["a_eval"] + beta * proof["s1_eval"] + gamma)
-                        * (proof["b_eval"] + beta * proof["s2_eval"] + gamma)
-                        * beta
-                        * alpha
-                        * proof["z_shifted_eval"]
-                    ),
-                ),
-                (
-                    b.G1,
-                    (
-                        -(proof["a_eval"] + beta * proof["s1_eval"] + gamma)
-                        * (proof["b_eval"] + beta * proof["s2_eval"] + gamma)
-                        * (proof["c_eval"] + gamma)
-                        * alpha
-                        * proof["z_shifted_eval"]
-                    ),
-                ),
-                (proof["z_1"], L0_ev * alpha**2),
-                (b.G1, -L0_ev * alpha**2),
-                (proof["t_lo_1"], -ZH_ev),
-                (proof["t_mid_1"], -ZH_ev * zeta**group_order),
-                (proof["t_hi_1"], -ZH_ev * zeta ** (group_order * 2)),
-            ]
-        )
-
-        print("verifier R_pt", R_pt)
-
-        # Verify that R(z) = 0 and the prover-provided evaluations
-        # A(z), B(z), C(z), S1(z), S2(z) are all correct
-        assert b.pairing(
-            b.G2,
-            ec_lincomb(
+        # # verify A with KZG10 commitment
+        W_c = proof["W_c"]
+        W_c_quot = proof["W_c_quot"]
+        c_eval = proof["c_eval"]
+        ec_comb_c = ec_lincomb(
                 [
-                    (R_pt, 1),
-                    (proof["a_1"], v),
-                    (b.G1, -v * proof["a_eval"]),
-                    (proof["b_1"], v**2),
-                    (b.G1, -(v**2) * proof["b_eval"]),
-                    (proof["c_1"], v**3),
-                    (b.G1, -(v**3) * proof["c_eval"]),
-                    (self.S1, v**4),
-                    (b.G1, -(v**4) * proof["s1_eval"]),
-                    (self.S2, v**5),
-                    (b.G1, -(v**5) * proof["s2_eval"]),
+                    (W_c, 1),
+                    (W_c_quot, zeta),
+                    (b.G1, -c_eval),
                 ]
-            ),
-        ) == b.pairing(b.add(self.X_2, ec_mul(b.G2, -zeta)), proof["W_z_1"])
-        print("done check 1")
+            )
 
-        # Verify that the provided value of Z(zeta*w) is correct
-        assert b.pairing(
-            b.G2, ec_lincomb([(proof["z_1"], 1), (b.G1, -proof["z_shifted_eval"])])
-        ) == b.pairing(
-            b.add(self.X_2, ec_mul(b.G2, -zeta * root_of_unity)), proof["W_zw_1"]
+        assert b.pairing(self.X_2, W_c_quot) == b.pairing(b.G2, ec_comb_c)
+        print("Done KZG10 commitment check for C polynomial")
+
+        # # verify Z with KZG10 commitment
+        W_z = proof["W_z"]
+        W_z_quot = proof["W_z_quot"]
+        z_eval = proof["z_eval"]
+        ec_comb_z = ec_lincomb(
+                [
+                    (W_z, 1),
+                    (W_z_quot, zeta),
+                    (b.G1, -z_eval),
+                ]
+            )
+
+        assert b.pairing(self.X_2, W_z_quot) == b.pairing(b.G2, ec_comb_z)
+        print("Done KZG10 commitment check for Z polynomial")
+
+        # verify ZW with KZG10 commitment
+        W_zw = proof["W_zw"]
+        W_zw_quot = proof["W_zw_quot"]
+        zw_eval = proof["z_shifted_eval"]
+        ec_comb_zw = ec_lincomb(
+                [
+                    (W_zw, 1),
+                    (W_zw_quot, zeta),
+                    (b.G1, -zw_eval),
+                ]
+            )
+
+        assert b.pairing(self.X_2, W_zw_quot) == b.pairing(b.G2, ec_comb_zw)
+        print("Done KZG10 commitment check for ZW polynomial")
+
+        # verify T with KZG10 commitment
+        W_t = proof["W_t"]
+        W_t_quot = proof["W_t_quot"]
+        t_eval = proof["quot_eval"]
+        ec_comb_t = ec_lincomb(
+                [
+                    (W_t, 1),
+                    (W_t_quot, zeta),
+                    (b.G1, -t_eval),
+                ]
+            )
+
+        assert b.pairing(self.X_2, W_t_quot) == b.pairing(b.G2, ec_comb_t)
+        print("Done KZG10 commitment check for quotient polynomial")
+
+        s1_eval = proof["s1_eval"]
+        s2_eval = proof["s2_eval"]
+        s3_eval = proof["s3_eval"]
+        ql_eval = proof["ql_eval"]
+        qr_eval = proof["qr_eval"]
+        qm_eval = proof["qm_eval"]
+        qo_eval = proof["qo_eval"]
+        qc_eval = proof["qc_eval"]
+
+        f_eval = (
+            (a_eval + beta * zeta + gamma)
+            * (b_eval + beta * zeta * 2 + gamma)
+            * (c_eval + beta * zeta * 3 + gamma)
         )
-        print("done check 2")
+        g_eval = (
+            (a_eval + beta * s1_eval + gamma)
+            * (b_eval + beta * s2_eval + gamma)
+            * (c_eval + beta * s3_eval + gamma)
+        )
+
+        gate_constraints_eval = (
+            ql_eval * a_eval
+            + qr_eval * b_eval
+            + qm_eval * a_eval * b_eval
+            + qo_eval * c_eval
+            + qc_eval
+            + PI_ev
+        )
+
+        permutation_grand_product_eval = z_eval * f_eval - zw_eval * g_eval
+
+        permutation_first_row_eval = L0_ev * (z_eval - 1)
+
+        left = (
+            gate_constraints_eval
+            + alpha * permutation_grand_product_eval
+            +  alpha ** 2 * permutation_first_row_eval
+        )
+
+        right = t_eval * ZH_ev
+
+        assert left == right
+
+        print("Done equation check for all constraints")
         return True
 
     # Compute challenges (should be same as those computed by prover)
