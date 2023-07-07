@@ -1,6 +1,6 @@
 from curve import Scalar
 from enum import Enum
-
+from numpy.polynomial import polynomial as P
 
 class Basis(Enum):
     LAGRANGE = 1
@@ -22,69 +22,133 @@ class Polynomial:
 
     def __add__(self, other):
         if isinstance(other, Polynomial):
-            assert len(self.values) == len(other.values)
             assert self.basis == other.basis
+            if (self.basis == Basis.LAGRANGE):
+                assert len(self.values) == len(other.values)
+                return Polynomial(
+                    [x + y for x, y in zip(self.values, other.values)],
+                    self.basis,
+                )
 
-            return Polynomial(
-                [x + y for x, y in zip(self.values, other.values)],
-                self.basis,
-            )
+            if (self.basis == Basis.MONOMIAL):
+                res = P.polyadd(self.values, other.values)
+                return Polynomial(
+                    res,
+                    self.basis,
+                )
         else:
             assert isinstance(other, Scalar)
-            return Polynomial(
-                [x + other for x in self.values],
-                self.basis,
-            )
+            if (self.basis == Basis.LAGRANGE):
+                return Polynomial(
+                    [x + other for x in self.values],
+                    self.basis,
+                )
+
+            if (self.basis == Basis.MONOMIAL):
+                res = P.polyadd(self.values, [other])
+                return Polynomial(
+                    res,
+                    self.basis,
+                )
+
 
     def __sub__(self, other):
         if isinstance(other, Polynomial):
-            assert len(self.values) == len(other.values)
             assert self.basis == other.basis
+            if (self.basis == Basis.LAGRANGE):
+                assert len(self.values) == len(other.values)
+                return Polynomial(
+                    [x - y for x, y in zip(self.values, other.values)],
+                    self.basis,
+                )
 
-            return Polynomial(
-                [x - y for x, y in zip(self.values, other.values)],
-                self.basis,
-            )
+            if (self.basis == Basis.MONOMIAL):
+                res = P.polysub(self.values, other.values)
+                return Polynomial(
+                    res,
+                    self.basis,
+                )
         else:
             assert isinstance(other, Scalar)
-            return Polynomial(
-                [x - other for x in self.values],
-                self.basis,
-            )
+            if (self.basis == Basis.LAGRANGE):
+                return Polynomial(
+                    [x - other for x in self.values],
+                    self.basis,
+                )
+
+            if (self.basis == Basis.MONOMIAL):
+                res = P.polysub(self.values, [other])
+                return Polynomial(
+                    res,
+                    self.basis,
+                )
 
     def __mul__(self, other):
         if isinstance(other, Polynomial):
-            assert self.basis == Basis.LAGRANGE
             assert self.basis == other.basis
-            assert len(self.values) == len(other.values)
+            if (self.basis == Basis.LAGRANGE):
+                assert len(self.values) == len(other.values)
+                res = [x * y for x, y in zip(self.values, other.values)]
+            if (self.basis == Basis.MONOMIAL):
+                c1 = self.values
+                c2 = other.values
+                res = P.polymul(c1,c2)
 
             return Polynomial(
-                [x * y for x, y in zip(self.values, other.values)],
+                res,
                 self.basis,
             )
         else:
             assert isinstance(other, Scalar)
-            return Polynomial(
-                [x * other for x in self.values],
-                self.basis,
-            )
+            if (self.basis == Basis.LAGRANGE):
+                return Polynomial(
+                    [x * other for x in self.values],
+                    self.basis,
+                )
+
+            if (self.basis == Basis.MONOMIAL):
+                c1 = self.values
+                c2 = [other]
+                res = P.polymul(c1,c2)
+                return Polynomial(
+                    res,
+                    self.basis,
+                )
 
     def __truediv__(self, other):
         if isinstance(other, Polynomial):
-            assert self.basis == Basis.LAGRANGE
             assert self.basis == other.basis
-            assert len(self.values) == len(other.values)
+            if (self.basis == Basis.LAGRANGE):
+                assert len(self.values) == len(other.values)
+                return Polynomial(
+                    [x / y for x, y in zip(self.values, other.values)],
+                    self.basis,
+                )
+            if (self.basis == Basis.MONOMIAL):
+                qx, rx = P.polydiv(self.values, other.values)
+                # here we only consider the scenario of remainder is 0
+                assert rx == [0]
 
-            return Polynomial(
-                [x / y for x, y in zip(self.values, other.values)],
-                self.basis,
-            )
+                return Polynomial(
+                    qx,
+                    self.basis,
+                )
         else:
             assert isinstance(other, Scalar)
-            return Polynomial(
-                [x / other for x in self.values],
-                self.basis,
-            )
+            if (self.basis == Basis.LAGRANGE):
+                return Polynomial(
+                    [x / other for x in self.values],
+                    self.basis,
+                )
+
+            if (self.basis == Basis.MONOMIAL):
+                c1 = self.values
+                c2 = [other]
+                res = P.polydiv(c1,c2)
+                return Polynomial(
+                    res,
+                    self.basis,
+                )
 
     def shift(self, shift: int):
         assert self.basis == Basis.LAGRANGE
@@ -165,6 +229,7 @@ class Polynomial:
 
     # Given a polynomial expressed as a list of evaluations at roots of unity,
     # evaluate it at x directly, without using an FFT to covert to coeffs first
+    # https://hackmd.io/@vbuterin/barycentric_evaluation
     def barycentric_eval(self, x: Scalar):
         assert self.basis == Basis.LAGRANGE
 
@@ -180,3 +245,13 @@ class Polynomial:
                 ]
             )
         )
+
+    # Evaluate at x directly for polynomial of MONOMIAL
+    # This is inefficient, just for study usage
+    def coeff_eval(self, x: Scalar):
+        assert self.basis == Basis.MONOMIAL
+        coeffs = self.values
+        result = coeffs[0]
+        for i in range(1, len(coeffs)):
+            result = result + coeffs[i] * x**i
+        return result
