@@ -23,36 +23,50 @@ class Message2:
 
 @dataclass
 class Message3:
-    # [t_lo(x)]₁ (commitment to t_lo(X), the low chunk of the quotient polynomial t(X))
-    t_lo_1: G1Point
-    # [t_mid(x)]₁ (commitment to t_mid(X), the middle chunk of the quotient polynomial t(X))
-    t_mid_1: G1Point
-    # [t_hi(x)]₁ (commitment to t_hi(X), the high chunk of the quotient polynomial t(X))
-    t_hi_1: G1Point
+    # [quot(x)]₁ (commitment to the quotient polynomial t(X))
+    W_quot: G1Point
 
 
 @dataclass
 class Message4:
+    # all_eval: Scalar
     # Evaluation of a(X) at evaluation challenge ζ
     a_eval: Scalar
     # Evaluation of b(X) at evaluation challenge ζ
     b_eval: Scalar
     # Evaluation of c(X) at evaluation challenge ζ
     c_eval: Scalar
+    ql_eval: Scalar
+    qr_eval: Scalar
+    qm_eval: Scalar
+    qo_eval: Scalar
+    qc_eval: Scalar
     # Evaluation of the first permutation polynomial S_σ1(X) at evaluation challenge ζ
     s1_eval: Scalar
     # Evaluation of the second permutation polynomial S_σ2(X) at evaluation challenge ζ
     s2_eval: Scalar
+    # Evaluation of the second permutation polynomial S_σ3(X) at evaluation challenge ζ
+    s3_eval: Scalar
     # Evaluation of the shifted permutation polynomial z(X) at the shifted evaluation challenge ζω
+    z_eval: Scalar
     z_shifted_eval: Scalar
+    quot_eval: Scalar
 
 
 @dataclass
 class Message5:
-    # [W_ζ(X)]₁ (commitment to the opening proof polynomial)
-    W_z_1: G1Point
-    # [W_ζω(X)]₁ (commitment to the opening proof polynomial)
-    W_zw_1: G1Point
+    W_a: G1Point
+    W_a_quot: G1Point
+    W_b: G1Point
+    W_b_quot: G1Point
+    W_c: G1Point
+    W_c_quot: G1Point
+    W_z: G1Point
+    W_z_quot: G1Point
+    W_zw: G1Point
+    W_zw_quot: G1Point
+    W_t: G1Point
+    W_t_quot: G1Point
 
 
 class Transcript(MerlinTranscript):
@@ -97,9 +111,7 @@ class Transcript(MerlinTranscript):
         return alpha, fft_cofactor
 
     def round_3(self, message: Message3) -> Scalar:
-        self.append_point(b"t_lo_1", message.t_lo_1)
-        self.append_point(b"t_mid_1", message.t_mid_1)
-        self.append_point(b"t_hi_1", message.t_hi_1)
+        self.append_point(b"W_quot", message.W_quot)
 
         zeta = self.get_and_append_challenge(b"zeta")
         return zeta
@@ -110,14 +122,25 @@ class Transcript(MerlinTranscript):
         self.append_scalar(b"c_eval", message.c_eval)
         self.append_scalar(b"s1_eval", message.s1_eval)
         self.append_scalar(b"s2_eval", message.s2_eval)
+        self.append_scalar(b"s3_eval", message.s3_eval)
         self.append_scalar(b"z_shifted_eval", message.z_shifted_eval)
 
         v = self.get_and_append_challenge(b"v")
         return v
 
     def round_5(self, message: Message5) -> Scalar:
-        self.append_point(b"W_z_1", message.W_z_1)
-        self.append_point(b"W_zw_1", message.W_zw_1)
+        self.append_point(b"W_a", message.W_a)
+        self.append_point(b"W_a_quot", message.W_a_quot)
+        self.append_point(b"W_b", message.W_b)
+        self.append_point(b"W_b_quot", message.W_b_quot)
+        self.append_point(b"W_c", message.W_c)
+        self.append_point(b"W_c_quot", message.W_c_quot)
+        self.append_point(b"W_z", message.W_z)
+        self.append_point(b"W_z_quot", message.W_z_quot)
+        self.append_point(b"W_zw", message.W_zw)
+        self.append_point(b"W_zw_quot", message.W_zw_quot)
+        self.append_point(b"W_t", message.W_t)
+        self.append_point(b"W_t_quot", message.W_t_quot)
 
         u = self.get_and_append_challenge(b"u")
         return u
