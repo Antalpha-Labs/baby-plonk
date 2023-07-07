@@ -21,17 +21,33 @@ class Proof:
         proof["b_1"] = self.msg_1.b_1
         proof["c_1"] = self.msg_1.c_1
         proof["z_1"] = self.msg_2.z_1
-        proof["t_lo_1"] = self.msg_3.t_lo_1
-        proof["t_mid_1"] = self.msg_3.t_mid_1
-        proof["t_hi_1"] = self.msg_3.t_hi_1
+        proof["W_quot"] = self.msg_3.W_quot
         proof["a_eval"] = self.msg_4.a_eval
         proof["b_eval"] = self.msg_4.b_eval
         proof["c_eval"] = self.msg_4.c_eval
+        proof["ql_eval"] = self.msg_4.ql_eval
+        proof["qr_eval"] = self.msg_4.qr_eval
+        proof["qm_eval"] = self.msg_4.qm_eval
+        proof["qo_eval"] = self.msg_4.qo_eval
+        proof["qc_eval"] = self.msg_4.qc_eval
         proof["s1_eval"] = self.msg_4.s1_eval
         proof["s2_eval"] = self.msg_4.s2_eval
+        proof["s3_eval"] = self.msg_4.s3_eval
+        proof["z_eval"] = self.msg_4.z_eval
         proof["z_shifted_eval"] = self.msg_4.z_shifted_eval
-        proof["W_z_1"] = self.msg_5.W_z_1
-        proof["W_zw_1"] = self.msg_5.W_zw_1
+        proof["quot_eval"] = self.msg_4.quot_eval
+        proof["W_a"] = self.msg_5.W_a
+        proof["W_a_quot"] = self.msg_5.W_a_quot
+        proof["W_b"] = self.msg_5.W_b
+        proof["W_b_quot"] = self.msg_5.W_b_quot
+        proof["W_c"] = self.msg_5.W_c
+        proof["W_c_quot"] = self.msg_5.W_c_quot
+        proof["W_z"] = self.msg_5.W_z
+        proof["W_z_quot"] = self.msg_5.W_z_quot
+        proof["W_zw"] = self.msg_5.W_zw
+        proof["W_zw_quot"] = self.msg_5.W_zw_quot
+        proof["W_t"] = self.msg_5.W_t
+        proof["W_t_quot"] = self.msg_5.W_t_quot
         return proof
 
 
@@ -170,24 +186,20 @@ class Prover:
 
         # Compute the quotient polynomial
 
-        # List of roots of unity at 4x fineness
-        quarter_roots = Scalar.roots_of_unity(group_order * 4)
+        alpha = self.alpha
 
-        A_big = self.fft_expand(self.A)
-        B_big = self.fft_expand(self.B)
-        C_big = self.fft_expand(self.C)
-        # Z_H = X^N - 1, also in evaluation form in the coset
-        ZH_big = Polynomial(
-            [
-                ((Scalar(r) * self.fft_cofactor) ** group_order - 1)
-                for r in quarter_roots
-            ],
-            Basis.LAGRANGE,
-        )
+        roots_of_unity = Scalar.roots_of_unity(group_order)
 
-        QL_big, QR_big, QM_big, QO_big, QC_big, PI_big = (
-            self.fft_expand(x)
+        A_coeff, B_coeff, C_coeff, S1_coeff, S2_coeff, S3_coeff, Z_coeff, QL_coeff, QR_coeff, QM_coeff, QO_coeff, QC_coeff, PI_coeff = (
+            x.ifft()
             for x in (
+                self.A,
+                self.B,
+                self.C,
+                self.pk.S1,
+                self.pk.S2,
+                self.pk.S3,
+                self.Z,
                 self.pk.QL,
                 self.pk.QR,
                 self.pk.QM,
@@ -197,279 +209,174 @@ class Prover:
             )
         )
 
-        Z_big = self.fft_expand(self.Z)
-        Z_shifted_big = Z_big.shift(4)
-        S1_big = self.fft_expand(self.pk.S1)
-        S2_big = self.fft_expand(self.pk.S2)
-        S3_big = self.fft_expand(self.pk.S3)
-
-        # Equals 1 at x = 1 = ω^0 and 0 at other roots of unity
-        L0_big = self.fft_expand(
+        L0_coeff = (
             Polynomial([Scalar(1)] + [Scalar(0)] * (group_order - 1), Basis.LAGRANGE)
+        ).ifft()
+
+        # x^8 - 1 coeffs are [-1, 0, 0, 0, 0, 0, 0, 0, 1]
+        # which needs 9 points(n + 1) to determine the polynomial
+        ZH_array = [Scalar(-1)] + [Scalar(0)] * (group_order - 1) + [Scalar(1)]
+        ZH_coeff = Polynomial(ZH_array, Basis.MONOMIAL)
+        assert all(x == 0 for x in ZH_coeff.fft().values)
+
+        gate_constraints_coeff = lambda: (
+            A_coeff * QL_coeff
+            + B_coeff * QR_coeff
+            + A_coeff * B_coeff * QM_coeff
+            + C_coeff * QO_coeff
+            + PI_coeff
+            + QC_coeff
         )
 
-        alpha = self.alpha
-        fft_cofactor = self.fft_cofactor
-        quarter_roots = Polynomial(
-            Scalar.roots_of_unity(group_order * 4), Basis.LAGRANGE
+        normal_roots = Polynomial(
+            roots_of_unity, Basis.LAGRANGE
         )
 
-        # Compute the quotient polynomial (called T(x) in the paper)
-        # It is only possible to construct this polynomial if the following
-        # equations are true at all roots of unity {1, w ... w^(n-1)}:
-        # 1. All gates are correct:
-        #    A * QL + B * QR + A * B * QM + C * QO + PI + QC = 0
-        gate_constraints = lambda: (
-            A_big * QL_big
-            + B_big * QR_big
-            + A_big * B_big * QM_big
-            + C_big * QO_big
-            + PI_big
-            + QC_big
-        )
+        roots_coeff = normal_roots.ifft()
 
-        # 2. The permutation accumulator is valid:
-        #    Z(wx) = Z(x) * (rlc of A, X, 1) * (rlc of B, 2X, 1) *
-        #                   (rlc of C, 3X, 1) / (rlc of A, S1, 1) /
-        #                   (rlc of B, S2, 1) / (rlc of C, S3, 1)
-        #    rlc = random linear combination: term_1 + beta * term2 + gamma * term3
-        permutation_grand_product = lambda: (
+        Z_shifted = self.Z.shift(1)
+        Z_shifted_coeff = Z_shifted.ifft()
+
+        for i in range(group_order):
+            assert (
+                self.rlc(self.A.values[i], roots_of_unity[i])
+                * self.rlc(self.B.values[i], 2 * roots_of_unity[i])
+                * self.rlc(self.C.values[i], 3 * roots_of_unity[i])
+            ) * self.Z.values[i] - (
+                self.rlc(self.A.values[i], self.pk.S1.values[i])
+                * self.rlc(self.B.values[i], self.pk.S2.values[i])
+                * self.rlc(self.C.values[i], self.pk.S3.values[i])
+            ) * Z_shifted.values[
+                i % group_order
+            ] == 0
+
+        permutation_grand_product_coeff = lambda: (
             (
-                self.rlc(A_big, quarter_roots * fft_cofactor)
-                * self.rlc(B_big, quarter_roots * (fft_cofactor * 2))
-                * self.rlc(C_big, quarter_roots * (fft_cofactor * 3))
+                self.rlc(A_coeff, roots_coeff)
+                * self.rlc(B_coeff, roots_coeff * Scalar(2))
+                * self.rlc(C_coeff, roots_coeff * Scalar(3))
             )
-            * Z_big
+            * Z_coeff
             - (
-                self.rlc(A_big, S1_big)
-                * self.rlc(B_big, S2_big)
-                * self.rlc(C_big, S3_big)
+                self.rlc(A_coeff, S1_coeff)
+                * self.rlc(B_coeff, S2_coeff)
+                * self.rlc(C_coeff, S3_coeff)
             )
-            * Z_shifted_big
+            * Z_shifted_coeff
         )
 
-        # 3. The permutation accumulator equals 1 at the start point
-        #    (Z - 1) * L0 = 0
-        #    L0 = Lagrange polynomial, equal at all roots of unity except 1
-        permutation_first_row = lambda: (Z_big - Scalar(1)) * L0_big
+        permutation_first_row_coeff = lambda: (Z_coeff - Scalar(1)) * L0_coeff
 
-        QUOT_big = (
-            gate_constraints()
-            + permutation_grand_product() * alpha
-            + permutation_first_row() * alpha**2
-        ) / ZH_big
-
-        all_coeffs = self.expanded_evals_to_coeffs(QUOT_big).values
-
-        # Sanity check: QUOT has degree < 3n
-        assert (
-            self.expanded_evals_to_coeffs(QUOT_big).values[-group_order:]
-            == [0] * group_order
+        all_constraints = (
+            gate_constraints_coeff()
+            + permutation_grand_product_coeff() * alpha
+            + permutation_first_row_coeff() * alpha**2
         )
+
+        QUOT_coeff = all_constraints / ZH_coeff
+
         print("Generated the quotient polynomial")
 
-        # Split up T into T1, T2 and T3 (needed because T has degree 3n, so is
-        # too big for the trusted setup)
-        T1 = Polynomial(all_coeffs[:group_order], Basis.MONOMIAL).fft()
-        T2 = Polynomial(all_coeffs[group_order : group_order * 2], Basis.MONOMIAL).fft()
-        T3 = Polynomial(
-            all_coeffs[group_order * 2 : group_order * 3], Basis.MONOMIAL
-        ).fft()
+        W_quot = setup.commit(QUOT_coeff)
 
-        # Sanity check that we've computed T1, T2, T3 correctly
-        assert (
-            T1.barycentric_eval(fft_cofactor)
-            + T2.barycentric_eval(fft_cofactor) * fft_cofactor**group_order
-            + T3.barycentric_eval(fft_cofactor) * fft_cofactor ** (group_order * 2)
-        ) == QUOT_big.values[0]
+        self.A_coeff = A_coeff
+        self.B_coeff = B_coeff
+        self.C_coeff = C_coeff
+        self.S1_coeff = S1_coeff
+        self.S2_coeff = S2_coeff
+        self.S3_coeff = S3_coeff
+        self.Z_coeff = Z_coeff
+        self.Z_shifted_coeff = Z_shifted_coeff
+        self.QL_coeff = QL_coeff
+        self.QR_coeff = QR_coeff
+        self.QM_coeff = QM_coeff
+        self.QO_coeff = QO_coeff
+        self.QC_coeff = QC_coeff
+        self.PI_coeff = PI_coeff
+        self.QUOT_coeff = QUOT_coeff
 
-        print("Generated T1, T2, T3 polynomials")
-
-        t_lo_1 = setup.commit(T1)
-        t_mid_1 = setup.commit(T2)
-        t_hi_1 = setup.commit(T3)
-
-        self.T1 = T1
-        self.T2 = T2
-        self.T3 = T3
-
-        return Message3(t_lo_1, t_mid_1, t_hi_1)
+        return Message3(W_quot)
 
     def round_4(self) -> Message4:
         group_order = self.group_order
         zeta = self.zeta
 
-        # Compute the "linearization polynomial" R. This is a clever way to avoid
-        # needing to provide evaluations of _all_ the polynomials that we are
-        # checking an equation betweeen: instead, we can "skip" the first
-        # multiplicand in each term. The idea is that we construct a
-        # polynomial which is constructed to equal 0 at Z only if the equations
-        # that we are checking are correct, and which the verifier can reconstruct
-        # the KZG commitment to, and we provide proofs to verify that it actually
-        # equals 0 at Z
-        #
-        # In order for the verifier to be able to reconstruct the commitment to R,
-        # it has to be "linear" in the proof items, hence why we can only use each
-        # proof item once; any further multiplicands in each term need to be
-        # replaced with their evaluations at Z, which do still need to be provided
-        a_eval = self.A.barycentric_eval(zeta)
-        b_eval = self.B.barycentric_eval(zeta)
-        c_eval = self.C.barycentric_eval(zeta)
-        s1_eval = self.pk.S1.barycentric_eval(zeta)
-        s2_eval = self.pk.S2.barycentric_eval(zeta)
+        a_eval = self.A_coeff.coeff_eval(zeta)
+        b_eval = self.B_coeff.coeff_eval(zeta)
+        c_eval = self.C_coeff.coeff_eval(zeta)
+        s1_eval = self.S1_coeff.coeff_eval(zeta)
+        s2_eval = self.S2_coeff.coeff_eval(zeta)
+        s3_eval = self.S3_coeff.coeff_eval(zeta)
         root_of_unity = Scalar.root_of_unity(group_order)
-        z_shifted_eval = self.Z.barycentric_eval(zeta * root_of_unity)
+        z_eval = self.Z_coeff.coeff_eval(zeta)
+        z_shifted_eval = self.Z_coeff.coeff_eval(zeta * root_of_unity)
+        ql_eval = self.QL_coeff.coeff_eval(zeta)
+        qr_eval = self.QR_coeff.coeff_eval(zeta)
+        qm_eval = self.QM_coeff.coeff_eval(zeta)
+        qo_eval = self.QO_coeff.coeff_eval(zeta)
+        qc_eval = self.QC_coeff.coeff_eval(zeta)
+        quot_eval = self.QUOT_coeff.coeff_eval(zeta)
 
         self.a_eval = a_eval
         self.b_eval = b_eval
         self.c_eval = c_eval
         self.s1_eval = s1_eval
         self.s2_eval = s2_eval
+        self.s3_eval = s3_eval
+        self.z_eval = z_eval
         self.z_shifted_eval = z_shifted_eval
+        self.quot_eval = quot_eval
 
-        return Message4(a_eval, b_eval, c_eval, s1_eval, s2_eval, z_shifted_eval)
+        return Message4(
+            a_eval,
+            b_eval,
+            c_eval,
+            ql_eval,
+            qr_eval,
+            qm_eval,
+            qo_eval,
+            qc_eval,
+            s1_eval,
+            s2_eval,
+            s3_eval,
+            z_eval,
+            z_shifted_eval,
+            quot_eval
+        )
 
     def round_5(self) -> Message5:
-        group_order = self.group_order
         setup = self.setup
-
         zeta = self.zeta
-        L0_ev = Polynomial(
-            [Scalar(1)] + [Scalar(0)] * (group_order - 1), Basis.LAGRANGE
-        ).barycentric_eval(zeta)
-        ZH_ev = zeta**group_order - 1
-        PI_ev = self.PI.barycentric_eval(zeta)
 
-        T1_big = self.fft_expand(self.T1)
-        T2_big = self.fft_expand(self.T2)
-        T3_big = self.fft_expand(self.T3)
+        # Polynomial for (X - zeta)
+        ZH_zeta_coeff = Polynomial([-zeta, Scalar(1)], Basis.MONOMIAL)
 
-        QL_big, QR_big, QM_big, QO_big, QC_big = (
-            self.fft_expand(x)
-            for x in (
-                self.pk.QL,
-                self.pk.QR,
-                self.pk.QM,
-                self.pk.QO,
-                self.pk.QC,
-            )
-        )
-        Z_big = self.fft_expand(self.Z)
-        S3_big = self.fft_expand(self.pk.S3)
+        A_QUOT_coeff = (self.A_coeff - self.a_eval) / ZH_zeta_coeff
+        W_a = setup.commit(self.A_coeff)
+        W_a_quot = setup.commit(A_QUOT_coeff)
 
-        alpha = self.alpha
-        v = self.v
-        c_eval = Polynomial([self.c_eval] * group_order * 4, Basis.LAGRANGE)
+        B_QUOT_coeff = (self.B_coeff - self.b_eval) / ZH_zeta_coeff
+        W_b = setup.commit(self.B_coeff)
+        W_b_quot = setup.commit(B_QUOT_coeff)
 
-        gate_constraints = lambda: (
-            QL_big * self.a_eval
-            + QR_big * self.b_eval
-            + QM_big * self.a_eval * self.b_eval
-            + QO_big * self.c_eval
-            + PI_ev
-            + QC_big
-        )
+        C_QUOT_coeff = (self.C_coeff - self.c_eval) / ZH_zeta_coeff
+        W_c = setup.commit(self.C_coeff)
+        W_c_quot = setup.commit(C_QUOT_coeff)
 
-        permutation_grand_product = lambda: (
-            Z_big
-            * (
-                self.rlc(self.a_eval, zeta)
-                * self.rlc(self.b_eval, 2 * zeta)
-                * self.rlc(self.c_eval, 3 * zeta)
-            )
-            - (
-                self.rlc(c_eval, S3_big)
-                * self.rlc(self.a_eval, self.s1_eval)
-                * self.rlc(self.b_eval, self.s2_eval)
-            )
-            * self.z_shifted_eval
-        )
+        Z_QUOT_coeff = (self.Z_coeff - self.z_eval) / ZH_zeta_coeff
+        W_z = setup.commit(self.Z_coeff)
+        W_z_quot = setup.commit(Z_QUOT_coeff)
 
-        permutation_first_row = lambda: (Z_big - Scalar(1)) * L0_ev
+        Z_shifted_QUOT_coeff = (self.Z_shifted_coeff - self.z_shifted_eval) / ZH_zeta_coeff
+        W_zw = setup.commit(self.Z_shifted_coeff)
+        W_zw_quot = setup.commit(Z_shifted_QUOT_coeff)
 
-        R_big = (
-            gate_constraints()
-            + permutation_grand_product() * alpha
-            + permutation_first_row() * (alpha**2)
-            - (
-                T1_big
-                + T2_big * zeta**group_order
-                + T3_big * zeta ** (group_order * 2)
-            )
-            * ZH_ev
-        )
-
-        R_coeffs = self.expanded_evals_to_coeffs(R_big).values
-        assert R_coeffs[group_order:] == [0] * (group_order * 3)
-        R = Polynomial(R_coeffs[:group_order], Basis.MONOMIAL).fft()
-
-        print("R_pt", setup.commit(R))
-
-        assert R.barycentric_eval(zeta) == 0
-
-        print("Generated linearization polynomial R")
-
-        # Generate proof that W(z) = 0 and that the provided evaluations of
-        # A, B, C, S1, S2 are correct
-        A_big = self.fft_expand(self.A)
-        B_big = self.fft_expand(self.B)
-        C_big = self.fft_expand(self.C)
-
-        QL_big, QR_big, QM_big, QO_big, QC_big = (
-            self.fft_expand(x)
-            for x in (
-                self.pk.QL,
-                self.pk.QR,
-                self.pk.QM,
-                self.pk.QO,
-                self.pk.QC,
-            )
-        )
-        S1_big = self.fft_expand(self.pk.S1)
-        S2_big = self.fft_expand(self.pk.S2)
-        S3_big = self.fft_expand(self.pk.S3)
-
-        root_of_unity = Scalar.root_of_unity(group_order)
-        quarter_roots = Polynomial(
-            Scalar.roots_of_unity(group_order * 4), Basis.LAGRANGE
-        )
-
-        W_z_big = (
-            R_big
-            + (A_big - self.a_eval) * v
-            + (B_big - self.b_eval) * v**2
-            + (C_big - self.c_eval) * v**3
-            + (S1_big - self.s1_eval) * v**4
-            + (S2_big - self.s2_eval) * v**5
-        ) / (quarter_roots * self.fft_cofactor - zeta)
-
-        W_z_coeffs = self.expanded_evals_to_coeffs(W_z_big).values
-        assert W_z_coeffs[group_order:] == [0] * (group_order * 3)
-        W_z = Polynomial(W_z_coeffs[:group_order], Basis.MONOMIAL).fft()
-        W_z_1 = setup.commit(W_z)
-
-        # Generate proof that the provided evaluation of Z(z*w) is correct. This
-        # awkwardly different term is needed because the permutation accumulator
-        # polynomial Z is the one place where we have to check between adjacent
-        # coordinates, and not just within one coordinate.
-
-        W_zw_big = (Z_big - self.z_shifted_eval) / (
-            quarter_roots * self.fft_cofactor - root_of_unity * zeta
-        )
-
-        W_zw_coeffs = self.expanded_evals_to_coeffs(W_zw_big).values
-        assert W_zw_coeffs[group_order:] == [0] * (group_order * 3)
-        W_zw = Polynomial(W_zw_coeffs[:group_order], Basis.MONOMIAL).fft()
-        W_zw_1 = setup.commit(W_zw)
+        T_QUOT_coeff = (self.QUOT_coeff - self.quot_eval) / ZH_zeta_coeff
+        W_t = setup.commit(self.QUOT_coeff)
+        W_t_quot = setup.commit(T_QUOT_coeff)
 
         print("Generated final quotient witness polynomials")
-        return Message5(W_z_1, W_zw_1)
-
-    def fft_expand(self, x: Polynomial):
-        return x.to_coset_extended_lagrange(self.fft_cofactor)
-
-    def expanded_evals_to_coeffs(self, x: Polynomial):
-        return x.coset_extended_lagrange_to_coeffs(self.fft_cofactor)
+        return Message5(W_a, W_a_quot, W_b, W_b_quot, W_c, W_c_quot, W_z, W_z_quot, W_zw, W_zw_quot, W_t, W_t_quot)
 
     def rlc(self, term_1, term_2):
         return term_1 + term_2 * self.beta + self.gamma
