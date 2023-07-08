@@ -218,7 +218,7 @@ class Prover:
         ZH_array = [Scalar(-1)] + [Scalar(0)] * (group_order - 1) + [Scalar(1)]
         ZH_coeff = Polynomial(ZH_array, Basis.MONOMIAL)
 
-        gate_constraints_coeff = lambda: (
+        gate_constraints_coeff = (
             A_coeff * QL_coeff
             + B_coeff * QR_coeff
             + A_coeff * B_coeff * QM_coeff
@@ -249,7 +249,7 @@ class Prover:
                 i % group_order
             ] == 0
 
-        permutation_grand_product_coeff = lambda: (
+        permutation_grand_product_coeff = (
             (
                 self.rlc(A_coeff, roots_coeff)
                 * self.rlc(B_coeff, roots_coeff * Scalar(2))
@@ -264,12 +264,12 @@ class Prover:
             * Z_shifted_coeff
         )
 
-        permutation_first_row_coeff = lambda: (Z_coeff - Scalar(1)) * L0_coeff
+        permutation_first_row_coeff = (Z_coeff - Scalar(1)) * L0_coeff
 
         all_constraints = (
-            gate_constraints_coeff()
-            + permutation_grand_product_coeff() * alpha
-            + permutation_first_row_coeff() * alpha**2
+            gate_constraints_coeff
+            + permutation_grand_product_coeff * alpha
+            + permutation_first_row_coeff * alpha**2
         )
 
         QUOT_coeff = all_constraints / ZH_coeff
