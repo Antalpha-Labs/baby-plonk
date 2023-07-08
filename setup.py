@@ -15,10 +15,10 @@ class Setup(object):
     X2: G2Point
 
     @classmethod
-    def generate_srs(cls):
+    def generate_srs(cls, powers: int):
         print("Start to generate structured reference string")
-        powers = 4096
-        tau = 21831381940315734285607113342023901060522397560371972897001948545212302161822
+        # tau is a random number whatever you choose
+        tau = 218313819403157342856071133
 
         powers_of_x = [0] * powers
         powers_of_x[0] = b.G1
@@ -36,6 +36,7 @@ class Setup(object):
 
         assert b.pairing(b.G2, powers_of_x[1]) == b.pairing(X2, b.G1)
         print("X^1 points checked consistent")
+        print("Finished to generate structured reference string")
 
         return cls(powers_of_x, X2)
 
