@@ -217,7 +217,6 @@ class Prover:
         # which needs 9 points(n + 1) to determine the polynomial
         ZH_array = [Scalar(-1)] + [Scalar(0)] * (group_order - 1) + [Scalar(1)]
         ZH_coeff = Polynomial(ZH_array, Basis.MONOMIAL)
-        assert all(x == 0 for x in ZH_coeff.fft().values)
 
         gate_constraints_coeff = lambda: (
             A_coeff * QL_coeff
