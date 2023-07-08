@@ -35,7 +35,7 @@ class Proof:
         proof["s3_eval"] = self.msg_4.s3_eval
         proof["z_eval"] = self.msg_4.z_eval
         proof["z_shifted_eval"] = self.msg_4.z_shifted_eval
-        proof["quot_eval"] = self.msg_4.quot_eval
+        proof["t_eval"] = self.msg_4.t_eval
         proof["W_a"] = self.msg_5.W_a
         proof["W_a_quot"] = self.msg_5.W_a_quot
         proof["W_b"] = self.msg_5.W_b
@@ -314,7 +314,7 @@ class Prover:
         qm_eval = self.QM_coeff.coeff_eval(zeta)
         qo_eval = self.QO_coeff.coeff_eval(zeta)
         qc_eval = self.QC_coeff.coeff_eval(zeta)
-        quot_eval = self.QUOT_coeff.coeff_eval(zeta)
+        t_eval = self.QUOT_coeff.coeff_eval(zeta)
 
         self.a_eval = a_eval
         self.b_eval = b_eval
@@ -324,7 +324,7 @@ class Prover:
         self.s3_eval = s3_eval
         self.z_eval = z_eval
         self.z_shifted_eval = z_shifted_eval
-        self.quot_eval = quot_eval
+        self.t_eval = t_eval
 
         return Message4(
             a_eval,
@@ -340,7 +340,7 @@ class Prover:
             s3_eval,
             z_eval,
             z_shifted_eval,
-            quot_eval
+            t_eval
         )
 
     def round_5(self) -> Message5:
@@ -370,7 +370,7 @@ class Prover:
         W_zw = setup.commit(self.Z_shifted_coeff)
         W_zw_quot = setup.commit(Z_shifted_QUOT_coeff)
 
-        T_QUOT_coeff = (self.QUOT_coeff - self.quot_eval) / ZH_zeta_coeff
+        T_QUOT_coeff = (self.QUOT_coeff - self.t_eval) / ZH_zeta_coeff
         W_t = setup.commit(self.QUOT_coeff)
         W_t_quot = setup.commit(T_QUOT_coeff)
 

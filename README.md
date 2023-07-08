@@ -217,7 +217,7 @@ class Message4:
     # Evaluation of the shifted permutation polynomial z(X) at the shifted evaluation challenge ζω
     z_shifted_eval: Scalar
     # Evaluation of Quotient Polynomial Quot(X) at evaluation challenge ζ
-    quot_eval: Scalar
+    t_eval: Scalar
 ```
 
 #### Round 5

@@ -132,7 +132,7 @@ class VerificationKey:
         # verify T with KZG10 commitment
         W_t = proof["W_t"]
         W_t_quot = proof["W_t_quot"]
-        t_eval = proof["quot_eval"]
+        t_eval = proof["t_eval"]
         ec_comb_t = ec_lincomb(
                 [
                     (W_t, 1),
