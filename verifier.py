@@ -42,7 +42,6 @@ class VerificationKey:
         proof = pf.flatten()
 
         # 5. Compute zero polynomial evaluation Z_H(ζ) = ζ^n - 1
-        root_of_unity = Scalar.root_of_unity(group_order)
         ZH_ev = zeta**group_order - 1
 
         # 6. Compute Lagrange polynomial evaluation L_0(ζ)
