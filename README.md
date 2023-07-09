@@ -181,7 +181,7 @@ def round_3(self) -> Message3
 @dataclass
 class Message3:
     # [quot(x)]₁ (commitment to the quotient polynomial t(X))
-    W_quot: G1Point
+    W_t: G1Point
 ```
 
 #### Round 4
@@ -215,7 +215,7 @@ class Message4:
     # Evaluation of the permutation polynomial z(X) at the evaluation challenge ζ
     z_eval: Scalar
     # Evaluation of the shifted permutation polynomial z(X) at the shifted evaluation challenge ζω
-    z_shifted_eval: Scalar
+    zw_eval: Scalar
     # Evaluation of Quotient Polynomial Quot(X) at evaluation challenge ζ
     t_eval: Scalar
 ```
@@ -233,6 +233,22 @@ class Message5:
     W_b_quot: G1Point
     W_c: G1Point
     W_c_quot: G1Point
+    W_ql: G1Point
+    W_ql_quot: G1Point
+    W_qr: G1Point
+    W_qr_quot: G1Point
+    W_qm: G1Point
+    W_qm_quot: G1Point
+    W_qo: G1Point
+    W_qo_quot: G1Point
+    W_qc: G1Point
+    W_qc_quot: G1Point
+    W_s1: G1Point
+    W_s1_quot: G1Point
+    W_s2: G1Point
+    W_s2_quot: G1Point
+    W_s3: G1Point
+    W_s3_quot: G1Point
     W_z: G1Point
     W_z_quot: G1Point
     W_zw: G1Point

@@ -21,7 +21,7 @@ class Proof:
         proof["b_1"] = self.msg_1.b_1
         proof["c_1"] = self.msg_1.c_1
         proof["z_1"] = self.msg_2.z_1
-        proof["W_quot"] = self.msg_3.W_quot
+        proof["W_t"] = self.msg_3.W_t
         proof["a_eval"] = self.msg_4.a_eval
         proof["b_eval"] = self.msg_4.b_eval
         proof["c_eval"] = self.msg_4.c_eval
@@ -34,7 +34,7 @@ class Proof:
         proof["s2_eval"] = self.msg_4.s2_eval
         proof["s3_eval"] = self.msg_4.s3_eval
         proof["z_eval"] = self.msg_4.z_eval
-        proof["z_shifted_eval"] = self.msg_4.z_shifted_eval
+        proof["zw_eval"] = self.msg_4.zw_eval
         proof["t_eval"] = self.msg_4.t_eval
         proof["W_a"] = self.msg_5.W_a
         proof["W_a_quot"] = self.msg_5.W_a_quot
@@ -42,6 +42,22 @@ class Proof:
         proof["W_b_quot"] = self.msg_5.W_b_quot
         proof["W_c"] = self.msg_5.W_c
         proof["W_c_quot"] = self.msg_5.W_c_quot
+        proof["W_ql"] = self.msg_5.W_ql
+        proof["W_ql_quot"] = self.msg_5.W_ql_quot
+        proof["W_qr"] = self.msg_5.W_qr
+        proof["W_qr_quot"] = self.msg_5.W_qr_quot
+        proof["W_qm"] = self.msg_5.W_qm
+        proof["W_qm_quot"] = self.msg_5.W_qm_quot
+        proof["W_qo"] = self.msg_5.W_qo
+        proof["W_qo_quot"] = self.msg_5.W_qo_quot
+        proof["W_qc"] = self.msg_5.W_qc
+        proof["W_qc_quot"] = self.msg_5.W_qc_quot
+        proof["W_s1"] = self.msg_5.W_s1
+        proof["W_s1_quot"] = self.msg_5.W_s1_quot
+        proof["W_s2"] = self.msg_5.W_s2
+        proof["W_s2_quot"] = self.msg_5.W_s2_quot
+        proof["W_s3"] = self.msg_5.W_s3
+        proof["W_s3_quot"] = self.msg_5.W_s3_quot
         proof["W_z"] = self.msg_5.W_z
         proof["W_z_quot"] = self.msg_5.W_z_quot
         proof["W_zw"] = self.msg_5.W_zw
@@ -232,9 +248,9 @@ class Prover:
         )
 
         roots_coeff = normal_roots.ifft()
-
-        Z_shifted = self.Z.shift(1)
-        Z_shifted_coeff = Z_shifted.ifft()
+        # z * w
+        ZW = self.Z.shift(1)
+        ZW_coeff = ZW.ifft()
 
         for i in range(group_order):
             assert (
@@ -245,7 +261,7 @@ class Prover:
                 self.rlc(self.A.values[i], self.pk.S1.values[i])
                 * self.rlc(self.B.values[i], self.pk.S2.values[i])
                 * self.rlc(self.C.values[i], self.pk.S3.values[i])
-            ) * Z_shifted.values[
+            ) * ZW.values[
                 i % group_order
             ] == 0
 
@@ -261,7 +277,7 @@ class Prover:
                 * self.rlc(B_coeff, S2_coeff)
                 * self.rlc(C_coeff, S3_coeff)
             )
-            * Z_shifted_coeff
+            * ZW_coeff
         )
 
         permutation_first_row_coeff = (Z_coeff - Scalar(1)) * L0_coeff
@@ -272,11 +288,12 @@ class Prover:
             + permutation_first_row_coeff * alpha**2
         )
 
-        QUOT_coeff = all_constraints / ZH_coeff
+        # quotient polynomial
+        T_coeff = all_constraints / ZH_coeff
 
         print("Generated the quotient polynomial")
 
-        W_quot = setup.commit(QUOT_coeff)
+        W_t = setup.commit(T_coeff)
 
         self.A_coeff = A_coeff
         self.B_coeff = B_coeff
@@ -285,16 +302,16 @@ class Prover:
         self.S2_coeff = S2_coeff
         self.S3_coeff = S3_coeff
         self.Z_coeff = Z_coeff
-        self.Z_shifted_coeff = Z_shifted_coeff
+        self.ZW_coeff = ZW_coeff
         self.QL_coeff = QL_coeff
         self.QR_coeff = QR_coeff
         self.QM_coeff = QM_coeff
         self.QO_coeff = QO_coeff
         self.QC_coeff = QC_coeff
         self.PI_coeff = PI_coeff
-        self.QUOT_coeff = QUOT_coeff
+        self.T_coeff = T_coeff
 
-        return Message3(W_quot)
+        return Message3(W_t)
 
     def round_4(self) -> Message4:
         group_order = self.group_order
@@ -308,22 +325,27 @@ class Prover:
         s3_eval = self.S3_coeff.coeff_eval(zeta)
         root_of_unity = Scalar.root_of_unity(group_order)
         z_eval = self.Z_coeff.coeff_eval(zeta)
-        z_shifted_eval = self.Z_coeff.coeff_eval(zeta * root_of_unity)
+        zw_eval = self.Z_coeff.coeff_eval(zeta * root_of_unity)
         ql_eval = self.QL_coeff.coeff_eval(zeta)
         qr_eval = self.QR_coeff.coeff_eval(zeta)
         qm_eval = self.QM_coeff.coeff_eval(zeta)
         qo_eval = self.QO_coeff.coeff_eval(zeta)
         qc_eval = self.QC_coeff.coeff_eval(zeta)
-        t_eval = self.QUOT_coeff.coeff_eval(zeta)
+        t_eval = self.T_coeff.coeff_eval(zeta)
 
         self.a_eval = a_eval
         self.b_eval = b_eval
         self.c_eval = c_eval
+        self.ql_eval = ql_eval
+        self.qr_eval = qr_eval
+        self.qm_eval = qm_eval
+        self.qo_eval = qo_eval
+        self.qc_eval = qc_eval
         self.s1_eval = s1_eval
         self.s2_eval = s2_eval
         self.s3_eval = s3_eval
         self.z_eval = z_eval
-        self.z_shifted_eval = z_shifted_eval
+        self.zw_eval = zw_eval
         self.t_eval = t_eval
 
         return Message4(
@@ -339,43 +361,55 @@ class Prover:
             s2_eval,
             s3_eval,
             z_eval,
-            z_shifted_eval,
+            zw_eval,
             t_eval
         )
 
     def round_5(self) -> Message5:
-        setup = self.setup
-        zeta = self.zeta
-
-        # Polynomial for (X - zeta)
-        ZH_zeta_coeff = Polynomial([-zeta, Scalar(1)], Basis.MONOMIAL)
-
-        A_QUOT_coeff = (self.A_coeff - self.a_eval) / ZH_zeta_coeff
-        W_a = setup.commit(self.A_coeff)
-        W_a_quot = setup.commit(A_QUOT_coeff)
-
-        B_QUOT_coeff = (self.B_coeff - self.b_eval) / ZH_zeta_coeff
-        W_b = setup.commit(self.B_coeff)
-        W_b_quot = setup.commit(B_QUOT_coeff)
-
-        C_QUOT_coeff = (self.C_coeff - self.c_eval) / ZH_zeta_coeff
-        W_c = setup.commit(self.C_coeff)
-        W_c_quot = setup.commit(C_QUOT_coeff)
-
-        Z_QUOT_coeff = (self.Z_coeff - self.z_eval) / ZH_zeta_coeff
-        W_z = setup.commit(self.Z_coeff)
-        W_z_quot = setup.commit(Z_QUOT_coeff)
-
-        Z_shifted_QUOT_coeff = (self.Z_shifted_coeff - self.z_shifted_eval) / ZH_zeta_coeff
-        W_zw = setup.commit(self.Z_shifted_coeff)
-        W_zw_quot = setup.commit(Z_shifted_QUOT_coeff)
-
-        T_QUOT_coeff = (self.QUOT_coeff - self.t_eval) / ZH_zeta_coeff
-        W_t = setup.commit(self.QUOT_coeff)
-        W_t_quot = setup.commit(T_QUOT_coeff)
+        W_a, W_a_quot = self.generate_commitment(self.A_coeff, self.a_eval)
+        W_b, W_b_quot = self.generate_commitment(self.B_coeff, self.b_eval)
+        W_c, W_c_quot = self.generate_commitment(self.C_coeff, self.c_eval)
+        W_ql, W_ql_quot = self.generate_commitment(self.QL_coeff, self.ql_eval)
+        W_qr, W_qr_quot = self.generate_commitment(self.QR_coeff, self.qr_eval)
+        W_qm, W_qm_quot = self.generate_commitment(self.QM_coeff, self.qm_eval)
+        W_qo, W_qo_quot = self.generate_commitment(self.QO_coeff, self.qo_eval)
+        W_qc, W_qc_quot = self.generate_commitment(self.QC_coeff, self.qc_eval)
+        W_s1, W_s1_quot = self.generate_commitment(self.S1_coeff, self.s1_eval)
+        W_s2, W_s2_quot = self.generate_commitment(self.S2_coeff, self.s2_eval)
+        W_s3, W_s3_quot = self.generate_commitment(self.S3_coeff, self.s3_eval)
+        W_z, W_z_quot = self.generate_commitment(self.Z_coeff, self.z_eval)
+        W_zw, W_zw_quot = self.generate_commitment(self.ZW_coeff, self.zw_eval)
+        W_t, W_t_quot = self.generate_commitment(self.T_coeff, self.t_eval)
 
         print("Generated final quotient witness polynomials")
-        return Message5(W_a, W_a_quot, W_b, W_b_quot, W_c, W_c_quot, W_z, W_z_quot, W_zw, W_zw_quot, W_t, W_t_quot)
+        return Message5(
+            W_a, W_a_quot,
+            W_b, W_b_quot,
+            W_c, W_c_quot,
+            W_ql, W_ql_quot,
+            W_qr, W_qr_quot,
+            W_qm, W_qm_quot,
+            W_qo, W_qo_quot,
+            W_qc, W_qc_quot,
+            W_s1, W_s1_quot,
+            W_s2, W_s2_quot,
+            W_s3, W_s3_quot,
+            W_z, W_z_quot,
+            W_zw, W_zw_quot,
+            W_t, W_t_quot,
+        )
 
     def rlc(self, term_1, term_2):
         return term_1 + term_2 * self.beta + self.gamma
+
+    def generate_commitment(self, coeff: Polynomial, eval: Scalar):
+        setup = self.setup
+        zeta = self.zeta
+        # Polynomial for (X - zeta)
+        ZH_zeta_coeff = Polynomial([-zeta, Scalar(1)], Basis.MONOMIAL)
+        quot_coeff = (coeff - eval) / ZH_zeta_coeff
+        # witness for polynomial itself
+        w = setup.commit(coeff)
+        # witness for quotient polynomial
+        w_quot = setup.commit(quot_coeff)
+        return w, w_quot

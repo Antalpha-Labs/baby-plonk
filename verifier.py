@@ -55,103 +55,37 @@ class VerificationKey:
         )
         PI_ev = PI.barycentric_eval(zeta)
 
-        # verify A with KZG10 commitment
-        W_a = proof["W_a"]
-        W_a_quot = proof["W_a_quot"]
+        # verify KZG10 commitment
+        self.verify_commitment(proof, "W_a", "W_a_quot", "a_eval", zeta)
+        self.verify_commitment(proof, "W_b", "W_b_quot", "b_eval", zeta)
+        self.verify_commitment(proof, "W_c", "W_c_quot", "c_eval", zeta)
+        self.verify_commitment(proof, "W_c", "W_c_quot", "c_eval", zeta)
+        self.verify_commitment(proof, "W_ql", "W_ql_quot", "ql_eval", zeta)
+        self.verify_commitment(proof, "W_qr", "W_qr_quot", "qr_eval", zeta)
+        self.verify_commitment(proof, "W_qm", "W_qm_quot", "qm_eval", zeta)
+        self.verify_commitment(proof, "W_qo", "W_qo_quot", "qo_eval", zeta)
+        self.verify_commitment(proof, "W_qc", "W_qc_quot", "qc_eval", zeta)
+        self.verify_commitment(proof, "W_s1", "W_s1_quot", "s1_eval", zeta)
+        self.verify_commitment(proof, "W_s2", "W_s2_quot", "s2_eval", zeta)
+        self.verify_commitment(proof, "W_s3", "W_s3_quot", "s3_eval", zeta)
+        self.verify_commitment(proof, "W_z", "W_z_quot", "z_eval", zeta)
+        self.verify_commitment(proof, "W_zw", "W_zw_quot", "zw_eval", zeta)
+        self.verify_commitment(proof, "W_t", "W_t_quot", "t_eval", zeta)
+
         a_eval = proof["a_eval"]
-        ec_comb_a = ec_lincomb(
-                [
-                    (W_a, 1),
-                    (W_a_quot, zeta),
-                    (b.G1, -a_eval),
-                ]
-            )
-        assert b.pairing(self.X_2, W_a_quot) == b.pairing(b.G2, ec_comb_a)
-        print("Done KZG10 commitment check for A polynomial")
-
-        # # verify A with KZG10 commitment
-        W_b = proof["W_b"]
-        W_b_quot = proof["W_b_quot"]
         b_eval = proof["b_eval"]
-        ec_comb_b = ec_lincomb(
-                [
-                    (W_b, 1),
-                    (W_b_quot, zeta),
-                    (b.G1, -b_eval),
-                ]
-            )
-
-        assert b.pairing(self.X_2, W_b_quot) == b.pairing(b.G2, ec_comb_b)
-        print("Done KZG10 commitment check for B polynomial")
-
-        # # verify A with KZG10 commitment
-        W_c = proof["W_c"]
-        W_c_quot = proof["W_c_quot"]
         c_eval = proof["c_eval"]
-        ec_comb_c = ec_lincomb(
-                [
-                    (W_c, 1),
-                    (W_c_quot, zeta),
-                    (b.G1, -c_eval),
-                ]
-            )
-
-        assert b.pairing(self.X_2, W_c_quot) == b.pairing(b.G2, ec_comb_c)
-        print("Done KZG10 commitment check for C polynomial")
-
-        # # verify Z with KZG10 commitment
-        W_z = proof["W_z"]
-        W_z_quot = proof["W_z_quot"]
-        z_eval = proof["z_eval"]
-        ec_comb_z = ec_lincomb(
-                [
-                    (W_z, 1),
-                    (W_z_quot, zeta),
-                    (b.G1, -z_eval),
-                ]
-            )
-
-        assert b.pairing(self.X_2, W_z_quot) == b.pairing(b.G2, ec_comb_z)
-        print("Done KZG10 commitment check for Z polynomial")
-
-        # verify ZW with KZG10 commitment
-        W_zw = proof["W_zw"]
-        W_zw_quot = proof["W_zw_quot"]
-        zw_eval = proof["z_shifted_eval"]
-        ec_comb_zw = ec_lincomb(
-                [
-                    (W_zw, 1),
-                    (W_zw_quot, zeta),
-                    (b.G1, -zw_eval),
-                ]
-            )
-
-        assert b.pairing(self.X_2, W_zw_quot) == b.pairing(b.G2, ec_comb_zw)
-        print("Done KZG10 commitment check for ZW polynomial")
-
-        # verify T with KZG10 commitment
-        W_t = proof["W_t"]
-        W_t_quot = proof["W_t_quot"]
-        t_eval = proof["t_eval"]
-        ec_comb_t = ec_lincomb(
-                [
-                    (W_t, 1),
-                    (W_t_quot, zeta),
-                    (b.G1, -t_eval),
-                ]
-            )
-
-        assert b.pairing(self.X_2, W_t_quot) == b.pairing(b.G2, ec_comb_t)
-        print("Done KZG10 commitment check for quotient polynomial")
-
-        s1_eval = proof["s1_eval"]
-        s2_eval = proof["s2_eval"]
-        s3_eval = proof["s3_eval"]
         ql_eval = proof["ql_eval"]
         qr_eval = proof["qr_eval"]
         qm_eval = proof["qm_eval"]
         qo_eval = proof["qo_eval"]
         qc_eval = proof["qc_eval"]
+        s1_eval = proof["s1_eval"]
+        s2_eval = proof["s2_eval"]
+        s3_eval = proof["s3_eval"]
+        z_eval = proof["z_eval"]
+        zw_eval = proof["zw_eval"]
+        t_eval = proof["t_eval"]
 
         f_eval = (
             (a_eval + beta * zeta + gamma)
@@ -202,3 +136,18 @@ class VerificationKey:
         u = transcript.round_5(proof.msg_5)
 
         return beta, gamma, alpha, zeta, v, u
+
+    def verify_commitment(self, proof, W_key, W_quot_key, eval_key, zeta):
+        W = proof[W_key]
+        W_quot = proof[W_quot_key]
+        eval = proof[eval_key]
+        ec_comb = ec_lincomb(
+            [
+                (W, 1),
+                (W_quot, zeta),
+                (b.G1, -eval),
+            ]
+        )
+
+        assert b.pairing(self.X_2, W_quot) == b.pairing(b.G2, ec_comb)
+        print(f"Done KZG10 commitment check for {eval_key} polynomial")
