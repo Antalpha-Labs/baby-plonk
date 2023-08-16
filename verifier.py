@@ -56,21 +56,20 @@ class VerificationKey:
         PI_ev = PI.barycentric_eval(zeta)
 
         # verify KZG10 commitment
-        self.verify_commitment(proof, "W_a", "W_a_quot", "a_eval", zeta)
-        self.verify_commitment(proof, "W_b", "W_b_quot", "b_eval", zeta)
-        self.verify_commitment(proof, "W_c", "W_c_quot", "c_eval", zeta)
-        self.verify_commitment(proof, "W_c", "W_c_quot", "c_eval", zeta)
-        self.verify_commitment(proof, "W_ql", "W_ql_quot", "ql_eval", zeta)
-        self.verify_commitment(proof, "W_qr", "W_qr_quot", "qr_eval", zeta)
-        self.verify_commitment(proof, "W_qm", "W_qm_quot", "qm_eval", zeta)
-        self.verify_commitment(proof, "W_qo", "W_qo_quot", "qo_eval", zeta)
-        self.verify_commitment(proof, "W_qc", "W_qc_quot", "qc_eval", zeta)
-        self.verify_commitment(proof, "W_s1", "W_s1_quot", "s1_eval", zeta)
-        self.verify_commitment(proof, "W_s2", "W_s2_quot", "s2_eval", zeta)
-        self.verify_commitment(proof, "W_s3", "W_s3_quot", "s3_eval", zeta)
-        self.verify_commitment(proof, "W_z", "W_z_quot", "z_eval", zeta)
-        self.verify_commitment(proof, "W_zw", "W_zw_quot", "zw_eval", zeta)
-        self.verify_commitment(proof, "W_t", "W_t_quot", "t_eval", zeta)
+        self.verify_commitment(proof, proof["W_a"], "W_a_quot", "a_eval", zeta)
+        self.verify_commitment(proof, proof["W_b"], "W_b_quot", "b_eval", zeta)
+        self.verify_commitment(proof, proof["W_c"], "W_c_quot", "c_eval", zeta)
+        self.verify_commitment(proof, proof["W_z"], "W_z_quot", "z_eval", zeta)
+        self.verify_commitment(proof, proof["W_zw"], "W_zw_quot", "zw_eval", zeta)
+        self.verify_commitment(proof, proof["W_t"], "W_t_quot", "t_eval", zeta)
+        self.verify_commitment(proof, self.Ql, "W_ql_quot", "ql_eval", zeta)
+        self.verify_commitment(proof, self.Qr, "W_qr_quot", "qr_eval", zeta)
+        self.verify_commitment(proof, self.Qm, "W_qm_quot", "qm_eval", zeta)
+        self.verify_commitment(proof, self.Qo, "W_qo_quot", "qo_eval", zeta)
+        self.verify_commitment(proof, self.Qc, "W_qc_quot", "qc_eval", zeta)
+        self.verify_commitment(proof, self.S1, "W_s1_quot", "s1_eval", zeta)
+        self.verify_commitment(proof, self.S2, "W_s2_quot", "s2_eval", zeta)
+        self.verify_commitment(proof, self.S3, "W_s3_quot", "s3_eval", zeta)
 
         a_eval = proof["a_eval"]
         b_eval = proof["b_eval"]
@@ -137,8 +136,7 @@ class VerificationKey:
 
         return beta, gamma, alpha, zeta, v, u
 
-    def verify_commitment(self, proof, W_key, W_quot_key, eval_key, zeta):
-        W = proof[W_key]
+    def verify_commitment(self, proof, W, W_quot_key, eval_key, zeta):
         W_quot = proof[W_quot_key]
         eval = proof[eval_key]
         ec_comb = ec_lincomb(
