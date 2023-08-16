@@ -198,35 +198,6 @@ class Polynomial:
     def ifft(self):
         return self.fft(True)
 
-    # Converts a list of evaluations at [1, w, w**2... w**(n-1)] to
-    # a list of evaluations at
-    # [offset, offset * q, offset * q**2 ... offset * q**(4n-1)] where q = w**(1/4)
-    # This lets us work with higher-degree polynomials, and the offset lets us
-    # avoid the 0/0 problem when computing a division (as long as the offset is
-    # chosen randomly)
-    def to_coset_extended_lagrange(self, offset):
-        assert self.basis == Basis.LAGRANGE
-        group_order = len(self.values)
-        x_powers = self.ifft().values
-        x_powers = [(offset**i * x) for i, x in enumerate(x_powers)] + [Scalar(0)] * (
-            group_order * 3
-        )
-        return Polynomial(x_powers, Basis.MONOMIAL).fft()
-
-    # Convert from offset form into coefficients
-    # Note that we can't make a full inverse function of to_coset_extended_lagrange
-    # because the output of this might be a deg >= n polynomial, which cannot
-    # be expressed via evaluations at n roots of unity
-    def coset_extended_lagrange_to_coeffs(self, offset):
-        assert self.basis == Basis.LAGRANGE
-
-        shifted_coeffs = self.ifft().values
-        inv_offset = 1 / offset
-        return Polynomial(
-            [v * inv_offset**i for (i, v) in enumerate(shifted_coeffs)],
-            Basis.LAGRANGE,
-        )
-
     # Given a polynomial expressed as a list of evaluations at roots of unity,
     # evaluate it at x directly, without using an FFT to covert to coeffs first
     # https://hackmd.io/@vbuterin/barycentric_evaluation
