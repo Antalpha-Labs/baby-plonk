@@ -8,6 +8,7 @@ from poly import Polynomial, Basis
 
 @dataclass
 class VerificationKey:
+    # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-constraints.md
     """Verification key"""
 
     group_order: int

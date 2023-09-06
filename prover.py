@@ -87,6 +87,7 @@ class Prover:
         # Collect fixed and public information
         # FIXME: Hash pk and PI into transcript
         public_vars = self.program.get_public_assignments()
+        # Public input polynomial
         PI = Polynomial(
             [Scalar(-witness[v]) for v in public_vars]
             + [Scalar(0) for _ in range(self.group_order - len(public_vars))],
@@ -119,6 +120,7 @@ class Prover:
         self,
         witness: dict[Optional[str], int],
     ) -> Message1:
+        # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-arithmetization.md
         program = self.program
         setup = self.setup
         group_order = self.group_order
@@ -158,6 +160,7 @@ class Prover:
         return Message1(a_1, b_1, c_1)
 
     def round_2(self) -> Message2:
+        # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-permutation.md#%E5%AE%8C%E6%95%B4%E7%9A%84%E7%BD%AE%E6%8D%A2%E5%8D%8F%E8%AE%AE
         group_order = self.group_order
         setup = self.setup
 
@@ -173,6 +176,7 @@ class Prover:
                 / self.rlc(self.B.values[i], self.pk.S2.values[i])
                 / self.rlc(self.C.values[i], self.pk.S3.values[i])
             )
+        # The last value is 1
         assert Z_values.pop() == 1
 
         # Sanity-check that Z was computed correctly
@@ -197,6 +201,7 @@ class Prover:
         return Message2(z_1)
 
     def round_3(self) -> Message3:
+        # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-constraints.md
         group_order = self.group_order
         setup = self.setup
 
@@ -314,6 +319,7 @@ class Prover:
         return Message3(W_t)
 
     def round_4(self) -> Message4:
+        # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-constraints.md
         group_order = self.group_order
         zeta = self.zeta
 

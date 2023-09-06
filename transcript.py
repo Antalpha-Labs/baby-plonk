@@ -91,7 +91,7 @@ class Message5:
     W_t: G1Point
     W_t_quot: G1Point
 
-
+# https://merlin.cool/
 class Transcript(MerlinTranscript):
     def append(self, label: bytes, item: bytes) -> None:
         self.append_message(label, item)

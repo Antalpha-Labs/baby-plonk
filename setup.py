@@ -8,6 +8,7 @@ from poly import Polynomial, Basis
 
 @dataclass
 class Setup(object):
+    # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-polycom.md#kzg10-%E6%9E%84%E9%80%A0
     #   ([1]₁, [x]₁, ..., [x^{d-1}]₁)
     # = ( G,    xG,  ...,  x^{d-1}G ), where G is a generator of G_1
     powers_of_x: list[G1Point]
