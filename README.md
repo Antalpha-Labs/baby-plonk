@@ -278,3 +278,6 @@ The `VerificationKey` contains:
 | $[S_{\sigma3}(x)]_1$     | commitment to the third permutation polynomial $S_{\sigma3}(X)$  |
 | $[x]_2 = xH$             | (from the $\mathsf{srs}$)                                        |
 | $\omega$                 | an $n$-th root of unity, where $n$ is the program's group order.  |
+
+## Community
+https://t.me/AntalphaLabs
