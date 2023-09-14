@@ -1,8 +1,32 @@
 # Baby Plonk
 
-**Baby Plonk** is an educational version of the PlonK protocol designed to assist beginners in comprehending its fundamental principles. While not a complete implementation of the protocol, it serves to simplify the concepts for ease of understanding, and does not prioritize efficiency.
+## Why this project
+Baby Plonk is an educational version of the PlonK protocol designed to assist beginners in comprehending its fundamental principles. 
 
-This repository originated from the [PlonKathon](https://github.com/0xPARC/plonkathon) and was subsequently modified to align with the material presented in the first 4 articles of [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md).
+Baby Plonk, succeeding from the [PlonKathon](https://github.com/0xPARC/plonkathon) and was subsequently modified to align with the material presented in the first 4 articles of [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md). 
+
+By simplifying the implementation for educational purposes, efficiency is lost to a certain degree but left to the individual to prioritize according to one’s needs. 
+
+As of now, we have implemented prover and verifier, and is on track to continue on polynomial commitment with articles of [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md). 
+
+## Key changes from PlonKathon
+### setup.py
+- Added `generate_srs` method so you can generate SRS(Structured Reference String) by specifying the nubmer powers as you need
+- Added support for `commit` to coefficient polynomial
+
+### poly.py
+- Added support for coefficient polynomial
+
+### prover.py
+- Changed polynomial from lagrange form to coefficient form
+- Removed coset operation
+- Removed linearization commitment
+
+### transcipt.py
+- Changed Fiat-Shamir transcript according to prover.py
+
+### verifier.py
+- Removed linearization, changed to verify each polynomial separately with pairing(KZG10)
 
 ## Getting started
 
@@ -281,3 +305,7 @@ The `VerificationKey` contains:
 
 ## Community
 https://t.me/AntalphaLabs
+
+Baby Plonk is a start to a series of educational Baby ZKP protocols we wish to promote. We call for more devs in the ZKP community to continue the journey and enrich the educational toolkits.
+
+We’d love to share any updates with the community moving forward and call for more devs to join us in this journey. Antalpha Labs is committed to supporting the building of educational materials.
