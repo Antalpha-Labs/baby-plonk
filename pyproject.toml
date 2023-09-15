@@ -1,15 +1,14 @@
 [tool.poetry]
-name = "plonkathon"
+name = "baby-plonk"
 version = "0.1.0"
-description = "A simple Python implementation of PLONK adapted from py_plonk"
-authors = ["0xPARC / Vitalik Buterin"]
+description = "A simple Python implementation of PLONK adapted from Plonkathon"
+authors = ["Harry Liu / 0xPARC / Vitalik Buterin"]
 license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.11"
+python = ">=3.9,<3.12"
 py-ecc = "^6.0.0"
-merlin = {git = "https://github.com/nalinbhardwaj/curdleproofs.pie", rev = "master", subdirectory = "merlin"}
 numpy = "^1.25.0"
 
 [tool.poetry.group.dev.dependencies]
