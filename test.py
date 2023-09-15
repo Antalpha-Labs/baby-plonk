@@ -1,8 +1,6 @@
 from compiler.program import Program
 from setup import Setup
 from prover import Prover
-from verifier import VerificationKey
-import json
 from test.mini_poseidon import rc, mds, poseidon_hash
 from utils import *
 
