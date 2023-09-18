@@ -1,13 +1,13 @@
 # Baby Plonk
 
 ## Why this project
-Baby Plonk is an educational version of the Plonk protocol designed to assist beginners in comprehending its fundamental principles. 
+Baby Plonk is an educational version of the Plonk protocol designed to assist beginners in comprehending its fundamental principles.
 
-Baby Plonk, succeeding from the [PlonKathon](https://github.com/0xPARC/plonkathon) and was subsequently modified to align with the material presented in the first 4 articles of [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md). 
+Baby Plonk, succeeding from the [PlonKathon](https://github.com/0xPARC/plonkathon) and was subsequently modified to align with the material presented in the first 4 articles of [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md).
 
-By simplifying the implementation for educational purposes, efficiency is lost to a certain degree but left to the individual to prioritize according to one’s needs. 
+By simplifying the implementation for educational purposes, efficiency is lost to a certain degree but left to the individual to prioritize according to one’s needs.
 
-As of now, we have implemented prover and verifier, and is on track to continue on polynomial commitment with articles of [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md). 
+As of now, we have implemented prover and verifier, and is on track to continue on polynomial commitment with articles of [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md).
 
 ## Key changes from PlonKathon
 ### setup.py
@@ -30,11 +30,43 @@ As of now, we have implemented prover and verifier, and is on track to continue 
 
 ## Getting started
 
-To get started, you'll need to have a Python version >= 3.8 and [`poetry`](https://python-poetry.org) installed: `curl -sSL https://install.python-poetry.org | python3 -`.
+### 1. Install poetry
 
-Then, run `poetry install` in the root of the repository. This will install all the dependencies in a virtualenv.
+To get started, you'll need to have a Python version >= 3.8 and [`poetry`](https://python-poetry.org) installed:
 
-Then, to see the proof system in action, run `poetry run python test.py` from the root of the repository. This will take you through the workflow of setup, proof generation, and verification for several example programs.
+`curl -sSL https://install.python-poetry.org | python3 -`.
+
+### 2. Install dependencies
+
+Run command in the root of the repository:
+
+`poetry install`
+
+This will install all the dependencies in a virtualenv.
+
+### 3. Run
+
+#### 3.1 Run with test.py
+
+Then, to see the proof system in action, run command from the root of the repository:
+
+`poetry run python test.py`
+
+This will take you through the workflow of setup, proof generation, and verification for several example programs.
+
+#### 3.2 Run with Jupyter
+
+3.2.1 Install jupyter with poetry:
+
+`poetry add -D jupyter`
+
+3.2.2 Run command:
+
+`poetry run jupyter lab`
+
+The browser will popup and launch jupyter lab. You can start to explore!
+
+
 ### Compiler
 #### Program
 We specify our program logic in a high-level language involving constraints and variable assignments. Here is a program that lets you prove that you know two small numbers that multiply to a given number (in our example we'll use 91) without revealing what those numbers are:
