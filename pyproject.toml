@@ -9,7 +9,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
 py-ecc = "^6.0.0"
-numpy = "^1.25.0"
+galois = "^0.3.5"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "^0.991"
