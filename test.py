@@ -12,7 +12,8 @@ def prover_test():
     # which is bigger than the order of quotient polynomial
     group_order = 8
     powers = group_order * 4
-    setup = Setup.generate_srs(powers)
+    tau = 218313819403157342856071133
+    setup = Setup.generate_srs(powers, tau)
 
     program = Program(["e public", "c <== a * b", "e <== c * d"], group_order)
     assignments = {"a": 3, "b": 4, "c": 12, "d": 5, "e": 60}
@@ -34,7 +35,8 @@ def factorization_test():
     print("Beginning test: prove you know small integers that multiply to 91")
     group_order = 16
     powers = group_order * 4
-    setup = Setup.generate_srs(powers)
+    tau = 218313819403157342856071133
+    setup = Setup.generate_srs(powers, tau)
 
     program = Program.from_str(
         """n public
@@ -109,7 +111,8 @@ def poseidon_test():
     expected_value = poseidon_hash(1, 2)
     group_order = 1024
     powers = group_order * 4
-    setup = Setup.generate_srs(powers)
+    tau = 218313819403157342856071133
+    setup = Setup.generate_srs(powers, tau)
     # Generate code for proof
     program = Program.from_str(output_proof_lang(), group_order)
     print("Generated code for Poseidon test")

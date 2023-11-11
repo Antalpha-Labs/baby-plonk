@@ -16,10 +16,9 @@ class Setup(object):
     X2: G2Point
 
     @classmethod
-    def generate_srs(cls, powers: int):
+    # tau: a random number whatever you choose
+    def generate_srs(cls, powers: int, tau: int):
         print("Start to generate structured reference string")
-        # tau is a random number whatever you choose
-        tau = 218313819403157342856071133
 
         # Initialize powers_of_x with 0 values
         powers_of_x = [0] * powers
