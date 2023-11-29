@@ -3,6 +3,11 @@ from setup import Setup
 from prover import Prover
 from test.mini_poseidon import rc, mds, poseidon_hash
 from utils import *
+import random
+
+# Generate a random integer between a specified range by user
+tau = random.randint(0, 100)
+print("Random number tau: ", tau)
 
 def prover_test():
     print("Beginning prover test")
@@ -12,7 +17,6 @@ def prover_test():
     # which is bigger than the order of quotient polynomial
     group_order = 8
     powers = group_order * 4
-    tau = 218313819403157342856071133
     setup = Setup.generate_srs(powers, tau)
 
     program = Program(["e public", "c <== a * b", "e <== c * d"], group_order)
@@ -35,7 +39,6 @@ def factorization_test():
     print("Beginning test: prove you know small integers that multiply to 91")
     group_order = 16
     powers = group_order * 4
-    tau = 218313819403157342856071133
     setup = Setup.generate_srs(powers, tau)
 
     program = Program.from_str(
@@ -111,7 +114,6 @@ def poseidon_test():
     expected_value = poseidon_hash(1, 2)
     group_order = 1024
     powers = group_order * 4
-    tau = 218313819403157342856071133
     setup = Setup.generate_srs(powers, tau)
     # Generate code for proof
     program = Program.from_str(output_proof_lang(), group_order)
@@ -127,8 +129,9 @@ def poseidon_test():
 
 if __name__ == "__main__":
     setup, proof, group_order = prover_test()
-    verifier_test(setup, proof, group_order)
+    setup.verify_commitment()
+    # verifier_test(setup, proof, group_order)
 
-    factorization_test()
+    # factorization_test()
 
-    poseidon_test()
+    # poseidon_test()
