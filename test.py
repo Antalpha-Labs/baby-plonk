@@ -129,9 +129,8 @@ def poseidon_test():
 
 if __name__ == "__main__":
     setup, proof, group_order = prover_test()
-    setup.verify_commitment()
-    # verifier_test(setup, proof, group_order)
+    verifier_test(setup, proof, group_order)
 
-    # factorization_test()
+    factorization_test()
 
-    # poseidon_test()
+    poseidon_test()
