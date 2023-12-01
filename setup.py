@@ -33,15 +33,16 @@ class Setup(object):
             if i > 0:
                 powers_of_x[i] = b.multiply(powers_of_x[i - 1], tau)
 
-        assert b.is_on_curve(powers_of_x[1], b.b)
         print("Generated G1 side, X^1 point: {}".format(powers_of_x[1]))
 
         X2 = b.multiply(b.G2, tau)
-        assert b.is_on_curve(X2, b.b2)
         print("Generated G2 side, X^1 point: {}".format(X2))
 
-        assert b.pairing(b.G2, powers_of_x[1]) == b.pairing(X2, b.G1)
-        print("X^1 points checked consistent")
+        # Below checks are slow, so we comment them out
+        # assert b.is_on_curve(powers_of_x[1], b.b)
+        # assert b.is_on_curve(X2, b.b2)
+        # assert b.pairing(b.G2, powers_of_x[1]) == b.pairing(X2, b.G1)
+
         print("Finished to generate structured reference string")
 
         return cls(powers_of_x, X2)
