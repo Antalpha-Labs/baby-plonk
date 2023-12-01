@@ -126,44 +126,11 @@ class Transcript(MerlinTranscript):
         self.append_point(b"z_1", message.z_1)
 
         alpha = self.get_and_append_challenge(b"alpha")
-        # This value could be anything, it just needs to be unpredictable. Lets us
-        # have evaluation forms at cosets to avoid zero evaluations, so we can
-        # divide polys without the 0/0 issue
-        fft_cofactor = self.get_and_append_challenge(b"fft_cofactor")
 
-        return alpha, fft_cofactor
+        return alpha
 
     def round_3(self, message: Message3) -> Scalar:
         self.append_point(b"W_t", message.W_t)
 
         zeta = self.get_and_append_challenge(b"zeta")
         return zeta
-
-    def round_4(self, message: Message4) -> Scalar:
-        self.append_scalar(b"a_eval", message.a_eval)
-        self.append_scalar(b"b_eval", message.b_eval)
-        self.append_scalar(b"c_eval", message.c_eval)
-        self.append_scalar(b"s1_eval", message.s1_eval)
-        self.append_scalar(b"s2_eval", message.s2_eval)
-        self.append_scalar(b"s3_eval", message.s3_eval)
-        self.append_scalar(b"zw_eval", message.zw_eval)
-
-        v = self.get_and_append_challenge(b"v")
-        return v
-
-    def round_5(self, message: Message5) -> Scalar:
-        self.append_point(b"W_a", message.W_a)
-        self.append_point(b"W_a_quot", message.W_a_quot)
-        self.append_point(b"W_b", message.W_b)
-        self.append_point(b"W_b_quot", message.W_b_quot)
-        self.append_point(b"W_c", message.W_c)
-        self.append_point(b"W_c_quot", message.W_c_quot)
-        self.append_point(b"W_z", message.W_z)
-        self.append_point(b"W_z_quot", message.W_z_quot)
-        self.append_point(b"W_zw", message.W_zw)
-        self.append_point(b"W_zw_quot", message.W_zw_quot)
-        self.append_point(b"W_t", message.W_t)
-        self.append_point(b"W_t_quot", message.W_t_quot)
-
-        u = self.get_and_append_challenge(b"u")
-        return u

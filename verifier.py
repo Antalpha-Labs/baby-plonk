@@ -38,17 +38,17 @@ class VerificationKey:
     # to understand and mixing together a lot of the computations to
     # efficiently batch them
     def verify_proof(self, group_order: int, pf, public=[]) -> bool:
-        # 1. Compute challenges
-        beta, gamma, alpha, zeta, v, u = self.compute_challenges(pf)
+        # Compute challenges
+        beta, gamma, alpha, zeta = self.compute_challenges(pf)
         proof = pf.flatten()
 
-        # 2. Compute zero polynomial evaluation Z_H(ζ) = ζ^n - 1
+        # Compute zero polynomial evaluation Z_H(ζ) = ζ^n - 1
         ZH_ev = zeta**group_order - 1
 
-        # 3. Compute Lagrange polynomial evaluation L_0(ζ)
+        # Compute Lagrange polynomial evaluation L_0(ζ)
         L0_ev = ZH_ev / (group_order * (zeta - 1))
 
-        # 4. Compute public input polynomial evaluation PI(ζ).
+        # Compute public input polynomial evaluation PI(ζ).
         PI = Polynomial(
             [Scalar(-x) for x in public]
             + [Scalar(0) for _ in range(group_order - len(public))],
@@ -56,7 +56,7 @@ class VerificationKey:
         )
         PI_ev = PI.barycentric_eval(zeta)
 
-        # 5. verify KZG10 commitment
+        # Verify KZG10 commitment
         self.verify_commitment(proof, proof["W_a"], "W_a_quot", "a_eval", zeta)
         self.verify_commitment(proof, proof["W_b"], "W_b_quot", "b_eval", zeta)
         self.verify_commitment(proof, proof["W_c"], "W_c_quot", "c_eval", zeta)
@@ -72,7 +72,7 @@ class VerificationKey:
         self.verify_commitment(proof, self.S2, "W_s2_quot", "s2_eval", zeta)
         self.verify_commitment(proof, self.S3, "W_s3_quot", "s3_eval", zeta)
 
-        # 5. verify constraints and permutation
+        # Verify constraints and permutation
         a_eval = proof["a_eval"]
         b_eval = proof["b_eval"]
         c_eval = proof["c_eval"]
@@ -128,15 +128,13 @@ class VerificationKey:
     # Compute challenges (should be same as those computed by prover)
     def compute_challenges(
         self, proof
-    ) -> tuple[Scalar, Scalar, Scalar, Scalar, Scalar, Scalar]:
+    ) -> tuple[Scalar, Scalar, Scalar, Scalar]:
         transcript = Transcript(b"plonk")
         beta, gamma = transcript.round_1(proof.msg_1)
-        alpha, _fft_cofactor = transcript.round_2(proof.msg_2)
+        alpha = transcript.round_2(proof.msg_2)
         zeta = transcript.round_3(proof.msg_3)
-        v = transcript.round_4(proof.msg_4)
-        u = transcript.round_5(proof.msg_5)
 
-        return beta, gamma, alpha, zeta, v, u
+        return beta, gamma, alpha, zeta
 
     def verify_commitment(self, proof, W, W_quot_key, eval_key, zeta):
         W_quot = proof[W_quot_key]

@@ -101,7 +101,7 @@ class Prover:
 
         # Round 2
         msg_2 = self.round_2()
-        self.alpha, self.fft_cofactor = transcript.round_2(msg_2)
+        self.alpha = transcript.round_2(msg_2)
 
         # Round 3
         msg_3 = self.round_3()
@@ -109,7 +109,6 @@ class Prover:
 
         # Round 4
         msg_4 = self.round_4()
-        self.v = transcript.round_4(msg_4)
 
         # Round 5
         msg_5 = self.round_5()
