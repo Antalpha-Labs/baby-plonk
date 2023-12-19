@@ -13,7 +13,7 @@ class Scalar(Field):
     # Gets the first root of unity of a given group order
     @classmethod
     def root_of_unity(cls, group_order: int):
-        return Scalar(5) ** ((cls.field_modulus - 1) // group_order)
+        return Scalar(primitive_root) ** ((cls.field_modulus - 1) // group_order)
 
     # Gets the full list of roots of unity of a given group order
     @classmethod
