@@ -29,9 +29,8 @@ class Setup(object):
         # powers_of_x[i] =  b.G1 * tau**i = powers_of_x[i - 1] * tau
         powers_of_x[0] = b.G1
 
-        for i in range(powers):
-            if i > 0:
-                powers_of_x[i] = b.multiply(powers_of_x[i - 1], tau)
+        for i in range(1, powers):
+            powers_of_x[i] = b.multiply(powers_of_x[i - 1], tau)
 
         print("Generated G1 side, X^1 point: {}".format(powers_of_x[1]))
 
