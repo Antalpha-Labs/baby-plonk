@@ -1,6 +1,7 @@
 from curve import Scalar
 from enum import Enum
 from numpy.polynomial import polynomial as P
+import numpy as np
 
 class Basis(Enum):
     LAGRANGE = 1
@@ -115,6 +116,7 @@ class Polynomial:
                     self.basis,
                 )
 
+    # division without remainder
     def __truediv__(self, other):
         if isinstance(other, Polynomial):
             assert self.basis == other.basis
@@ -127,7 +129,7 @@ class Polynomial:
             if (self.basis == Basis.MONOMIAL):
                 qx, rx = P.polydiv(self.values, other.values)
                 # here we only consider the scenario of remainder is 0
-                assert rx == [0]
+                assert list(rx) == [0]
 
                 return Polynomial(
                     qx,
@@ -144,11 +146,31 @@ class Polynomial:
             if (self.basis == Basis.MONOMIAL):
                 c1 = self.values
                 c2 = [other]
-                res = P.polydiv(c1,c2)
+                quo, rx = P.polydiv(c1,c2)
+                assert list(rx) == [0]
                 return Polynomial(
-                    res,
+                    quo,
                     self.basis,
                 )
+
+    def div_with_remainder(self, other):
+        assert isinstance(other, Polynomial)
+        assert self.basis == other.basis
+        if (self.basis == Basis.LAGRANGE):
+            assert len(self.values) == len(other.values)
+            return Polynomial(
+                [x / y for x, y in zip(self.values, other.values)],
+                self.basis,
+            )
+        if (self.basis == Basis.MONOMIAL):
+            qx, rx = P.polydiv(self.values, other.values)
+            return Polynomial(
+                qx,
+                self.basis,
+            ), Polynomial(
+                rx,
+                self.basis,
+            )
 
     def shift(self, shift: int):
         assert self.basis == Basis.LAGRANGE
@@ -198,6 +220,21 @@ class Polynomial:
     def ifft(self):
         return self.fft(True)
 
+    # add two polynomial for all cases
+    # this may be slower than the normal +
+    def force_add(self, other):
+        assert isinstance(other, Polynomial)
+        if self.basis != other.basis:
+            if self.basis == Basis.LAGRANGE:
+                return self.ifft() + other
+            else:
+                return self + other.ifft()
+        else:
+            if self.basis == Basis.LAGRANGE and len(self.values) != len(other.values):
+                return self.ifft() + other.ifft()
+            else:
+                return self + other
+
     # Given a polynomial expressed as a list of evaluations at roots of unity,
     # evaluate it at x directly, without using an FFT to covert to coeffs first
     # https://hackmd.io/@vbuterin/barycentric_evaluation
@@ -206,6 +243,10 @@ class Polynomial:
 
         order = len(self.values)
         roots_of_unity = Scalar.roots_of_unity(order)
+        elem = x.n % Scalar.field_modulus
+        if elem in roots_of_unity:
+            return self.values[roots_of_unity.index(elem)]
+
         return (
             (Scalar(x) ** order - 1)
             / order
@@ -223,6 +264,85 @@ class Polynomial:
         assert self.basis == Basis.MONOMIAL
         coeffs = self.values
         result = coeffs[0]
+        x_pow = Scalar(1)
         for i in range(1, len(coeffs)):
-            result = result + coeffs[i] * x**i
+            x_pow = x_pow * x
+            result = result + coeffs[i] * x_pow
         return result
+
+    def eval(self, x: Scalar):
+        if self.basis == Basis.LAGRANGE:
+            return self.barycentric_eval(x)
+        else:
+            return self.coeff_eval(x)
+
+    def to_mononial(self):
+        if self.basis == Basis.LAGRANGE:
+            return self.ifft()
+        else:
+            return self
+
+class PolyUtil:
+    # f(X) = X - a
+    def root_poly(self, x_val: Scalar) -> Polynomial:
+        return Polynomial([-x_val, Scalar(1)], Basis.MONOMIAL)
+
+    # f(X) = a
+    def const_poly(self, x_val: Scalar) -> Polynomial:
+        return Polynomial([x_val], Basis.MONOMIAL)
+
+    # vanishing polynomial on multiplicative subgroup
+    # z_H(X) = X^n - 1
+    def vanishing_poly(self, n: int) -> Polynomial:
+        return [Scalar(-1)] + [Scalar(0)] * (n - 1) + [Scalar(1)]
+
+    # generate polynomial: X^n
+    def x_exponent_poly(self, n: int) -> Polynomial:
+        values = [Scalar(0)] * (n - 1) + [Scalar(1)]
+        return Polynomial(values, Basis.MONOMIAL)
+
+# construct MONOMIAL Polynomial with any X and Y values
+# Note: do not use with FFT due to X is probably not multiplicative subgroup
+class InterpolationPoly:
+    n: int
+    X: list[Scalar]
+    Y: list[Scalar]
+    def __init__(self, X: list[Scalar], Y: list[Scalar]):
+        assert len(X) == len(Y), "Error: X should have the same length with Y"
+        self.n = len(X)
+        self.X = np.array(X)
+        self.Y = np.array(Y)
+        self.poly_util = PolyUtil()
+
+    # z_H(X) = (X - self.X[0])(X - self.X[1])(X - self.X[2])...
+    def vanishing_poly(self) -> Polynomial:
+        v_poly = self.poly_util.const_poly(Scalar(1))
+        for i in range(self.n):
+            v_poly *= self.poly_util.root_poly(self.X[i])
+        return v_poly
+
+    # compute the derivative
+    def vanishing_poly_diff(self) -> Polynomial:
+        v_poly = self.vanishing_poly()
+        v_diff_poly = self.poly_util.const_poly(Scalar(0))
+        for i in range(self.n):
+            v_diff_poly += v_poly / self.poly_util.root_poly(self.X[i])
+        return v_diff_poly
+
+    # Give i, return ith Lagrange polynomial L_i(X)
+    # L_i(X) = z_H(X) / z_H'(a_i) / (X - a_i)
+    def lagrange_poly(self, i: int) -> Polynomial:
+        v_poly = self.vanishing_poly()
+        v_diff_poly = self.vanishing_poly_diff()
+        x_val = self.X[i]
+        v_diff_poly_at_i = v_diff_poly.coeff_eval(x_val)
+        x_root_poly = self.poly_util.root_poly(x_val)
+        return v_poly / x_root_poly / v_diff_poly_at_i
+
+    # f(X) = Σ(L_i(X) * y_i)
+    def poly(self) -> Polynomial:
+        poly = self.poly_util.const_poly(Scalar(0))
+        for i in range(self.n):
+            lagrange_poly = self.lagrange_poly(i)
+            poly += lagrange_poly * self.Y[i]
+        return poly
