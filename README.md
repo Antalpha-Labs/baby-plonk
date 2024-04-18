@@ -9,6 +9,8 @@ By simplifying the implementation for educational purposes, efficiency is lost t
 
 As of now, we have implemented prover and verifier, and is on track to continue on polynomial commitment with articles of [Understanding Plonk Protocol](https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/README.md).
 
+You can also play the code with Python notebook [here](https://github.com/Antalpha-Labs/plonk-intro-notebook).
+
 ## Key changes from PlonKathon
 ### setup.py
 - Added `generate_srs` method so you can generate SRS(Structured Reference String) by specifying the nubmer powers as you need
