@@ -119,7 +119,7 @@ class Prover:
         self,
         witness: dict[Optional[str], int],
     ) -> Message1:
-        # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-arithmetization.md
+        # https://github.com/sec-bit/learning-zkp/blob/master/plonk-intro-cn/1-plonk-arithmetization.md
         program = self.program
         setup = self.setup
         group_order = self.group_order
@@ -159,7 +159,7 @@ class Prover:
         return Message1(a_1, b_1, c_1)
 
     def round_2(self) -> Message2:
-        # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-permutation.md#%E5%AE%8C%E6%95%B4%E7%9A%84%E7%BD%AE%E6%8D%A2%E5%8D%8F%E8%AE%AE
+        # https://github.com/sec-bit/learning-zkp/blob/master/plonk-intro-cn/3-plonk-permutation.md
         group_order = self.group_order
         setup = self.setup
 
@@ -200,7 +200,7 @@ class Prover:
         return Message2(z_1)
 
     def round_3(self) -> Message3:
-        # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-constraints.md
+        # https://github.com/sec-bit/learning-zkp/blob/master/plonk-intro-cn/4-plonk-constraints.md
         group_order = self.group_order
         setup = self.setup
 
@@ -318,7 +318,7 @@ class Prover:
         return Message3(W_t)
 
     def round_4(self) -> Message4:
-        # https://github.com/sec-bit/learning-zkp/blob/develop/plonk-intro-cn/plonk-constraints.md
+        # https://github.com/sec-bit/learning-zkp/blob/master/plonk-intro-cn/4-plonk-constraints.md
         group_order = self.group_order
         zeta = self.zeta
 
