@@ -37,10 +37,11 @@ class Setup(object):
         X2 = b.multiply(b.G2, tau)
         print("Generated G2 side, X^1 point: {}".format(X2))
 
-        # Below checks are slow, so we comment them out
-        # assert b.is_on_curve(powers_of_x[1], b.b)
-        # assert b.is_on_curve(X2, b.b2)
-        # assert b.pairing(b.G2, powers_of_x[1]) == b.pairing(X2, b.G1)
+        # verify point is on the curve
+        assert b.is_on_curve(powers_of_x[1], b.b)
+        assert b.is_on_curve(X2, b.b2)
+        # check pairing
+        assert b.pairing(b.G2, powers_of_x[1]) == b.pairing(X2, b.G1)
 
         print("Finished to generate structured reference string")
 
