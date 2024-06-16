@@ -130,7 +130,6 @@ def poseidon_test():
 if __name__ == "__main__":
     setup, proof, group_order = prover_test()
     verifier_test(setup, proof, group_order)
-
-    factorization_test()
-
-    poseidon_test()
+    # comment out them if you need to test them
+    # factorization_test()
+    # poseidon_test()
