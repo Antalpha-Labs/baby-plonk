@@ -200,7 +200,6 @@ class Prover:
         return Message2(z_1)
 
     def round_3(self) -> Message3:
-        # https://github.com/sec-bit/learning-zkp/blob/master/plonk-intro-cn/4-plonk-constraints.md
         group_order = self.group_order
         setup = self.setup
 
@@ -238,13 +237,10 @@ class Prover:
         ZH_array = [Scalar(-1)] + [Scalar(0)] * (group_order - 1) + [Scalar(1)]
         ZH_coeff = Polynomial(ZH_array, Basis.MONOMIAL)
 
+        # construct gate constraints polynomial in coefficient form
+        # reference: https://github.com/sec-bit/learning-zkp/blob/master/plonk-intro-cn/4-plonk-constraints.md
         gate_constraints_coeff = (
-            A_coeff * QL_coeff
-            + B_coeff * QR_coeff
-            + A_coeff * B_coeff * QM_coeff
-            + C_coeff * QO_coeff
-            + PI_coeff
-            + QC_coeff
+            # TODO: your code
         )
 
         normal_roots = Polynomial(
@@ -269,19 +265,10 @@ class Prover:
                 i % group_order
             ] == 0
 
+        # construct permutation polynomial
+        # reference: https://github.com/sec-bit/learning-zkp/blob/master/plonk-intro-cn/3-plonk-permutation.md
         permutation_grand_product_coeff = (
-            (
-                self.rlc(A_coeff, roots_coeff)
-                * self.rlc(B_coeff, roots_coeff * Scalar(2))
-                * self.rlc(C_coeff, roots_coeff * Scalar(3))
-            )
-            * Z_coeff
-            - (
-                self.rlc(A_coeff, S1_coeff)
-                * self.rlc(B_coeff, S2_coeff)
-                * self.rlc(C_coeff, S3_coeff)
-            )
-            * ZW_coeff
+            # TODO: your code
         )
 
         permutation_first_row_coeff = (Z_coeff - Scalar(1)) * L0_coeff
