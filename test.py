@@ -6,7 +6,7 @@ from utils import *
 import random
 
 # Generate a random integer between a specified range by user
-tau = random.randint(0, 100)
+tau = random.randint(2, 100)
 print("Random number tau: ", tau)
 
 def prover_test():
