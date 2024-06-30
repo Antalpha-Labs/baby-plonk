@@ -27,6 +27,7 @@ class Setup(object):
         # powers_of_x[2] =  b.G1 * tau**2 = powers_of_x[1] * tau
         # ...
         # powers_of_x[i] =  b.G1 * tau**i = powers_of_x[i - 1] * tau
+        # TODO: generate powers_of_x
         powers_of_x[0] = b.G1
 
         for i in range(1, powers):
