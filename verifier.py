@@ -87,7 +87,7 @@ class VerificationKey:
         z_eval = proof["z_eval"]
         zw_eval = proof["zw_eval"]
         t_eval = proof["t_eval"]
-
+     # TODO: your code
         f_eval = (
             (a_eval + beta * zeta + gamma)
             * (b_eval + beta * zeta * 2 + gamma)
