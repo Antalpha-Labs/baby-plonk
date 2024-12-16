@@ -13,7 +13,7 @@ You can also play the code with Python notebook [here](https://github.com/Antalp
 
 ## Key changes from PlonKathon
 ### setup.py
-- Added `generate_srs` method so you can generate SRS(Structured Reference String) by specifying the nubmer powers as you need
+- Added `generate_srs` method so you can generate SRS(Structured Reference String) by specifying the number powers as you need
 - Added support for `commit` to coefficient polynomial
 
 ### poly.py
@@ -24,7 +24,7 @@ You can also play the code with Python notebook [here](https://github.com/Antalp
 - Removed coset operation
 - Removed linearization commitment
 
-### transcipt.py
+### transcript.py
 - Changed Fiat-Shamir transcript according to prover.py
 
 ### verifier.py
