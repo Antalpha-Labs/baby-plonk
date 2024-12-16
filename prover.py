@@ -268,7 +268,18 @@ class Prover:
             ) * ZW.values[
                 i % group_order
             ] == 0
-
+            # TODO: your code
+            # NOTE: the implementation of id(x) is `Cell.label()`:
+            #
+            #     ```
+            #     # Outputs the label (an inner-field element) representing a given
+            #     # (column, row) pair. Expects section = 1 for left, 2 right, 3 output
+            #     def label(self, group_order: int) -> Scalar:
+            #         assert self.row < group_order
+            #         return Scalar.roots_of_unity(group_order)[self.row] * self.column.value
+            #     ```
+            #
+            # NOTE: the results of `Z(wX) g(X) - Z(X) f(X)` and `z(X) f(X) - z(wX) g(X)` are different.
         permutation_grand_product_coeff = (
             (
                 self.rlc(A_coeff, roots_coeff)
