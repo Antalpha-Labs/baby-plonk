@@ -186,7 +186,7 @@ class Polynomial:
     def fft(self, inv=False):
         # Fast Fourier transform, used to convert between polynomial coefficients
         # and a list of evaluations at the roots of unity
-        # See https://vitalik.ca/general/2019/05/12/fft.html
+        # See https://vitalik.eth.limo/general/2019/05/12/fft.html
         def _fft(vals, modulus, roots_of_unity):
             if len(vals) == 1:
                 return vals
