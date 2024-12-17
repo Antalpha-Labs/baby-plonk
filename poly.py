@@ -236,7 +236,7 @@ class Polynomial:
                 return self + other
 
     # Given a polynomial expressed as a list of evaluations at roots of unity,
-    # evaluate it at x directly, without using an FFT to covert to coeffs first
+    # evaluate it at x directly, without using an FFT to convert to coeffs first
     # https://hackmd.io/@vbuterin/barycentric_evaluation
     def barycentric_eval(self, x: Scalar):
         assert self.basis == Basis.LAGRANGE
